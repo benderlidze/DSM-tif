@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"
+        integrity="sha512-lO8f7sIViqr9x5VE6Q72PS6f4FoZcuh5W9YzeSyfNRJ9z/qL3bkweiwG6keGzWS0BQzNDqAWXdBhYzFD6KffIw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+
+<body>
+    <canvas id="plot"></canvas>
+
+</body>
+<script>
+
+    // Define the source and target coordinate systems
+    const src = proj4.defs('EPSG:4326'); // Geographic coordinates (latitude and longitude)
+    const dst = proj4.defs('EPSG:4326'); // Web Mercator projection
+
+    (async function () {
+        // const tiff = await GeoTIFF.fromUrl('dsm.tif');
+        // const image = await tiff.getImage();
+        // const data = await image.readRasters({ interleave: true });
+
+        // Load the GeoTIFF file
+        const response = await fetch('teste.tif');
+        const arrayBuffer = await response.arrayBuffer();
+        const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+
+        // Get the first image in the GeoTIFF file
+        const image = await tiff.getImage();
+
+        // Get the image's metadata
+        const metadata = await image.getFileDirectory();
+        console.log('metadata', metadata);
+
+        const { lng, lat } = { lat: -22.832906062124344, lng: -47.66755677759648 }
+
+        // Convert the latitude and longitude coordinates to projected coordinates
+        const [x, y] = proj4(src, dst, [lng, lat]);
+
+        console.log('x,y', x, y);
+        // Calculate the pixel coordinates corresponding to the projected coordinates
+        const [pixelX, pixelY] = [
+            Math.round((x - metadata.ModelTiepoint[3]) / metadata.ModelPixelScale[0]),
+            Math.round((metadata.ModelTiepoint[4] - y) / metadata.ModelPixelScale[1])
+        ];
+
+        // Get the elevation data at the pixel coordinates
+        const data = await image.readRasters({
+            window: [pixelX, pixelY, pixelX + 1, pixelY + 1],
+            interleave: true
+        });
+
+        console.log('data', data);
+        // Print the elevation data
+        console.log(data[0]);
+
+    })();
+</script>
+</script>
+
+</html>
