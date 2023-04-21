@@ -1,0 +1,11 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "geotiff": "^2.0.7",
+    "proj4": "^2.9.0"
+  },
+  "type": "module"
+}
