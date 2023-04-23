@@ -228,11 +228,9 @@
             const type = e.layer.options.type
             const layer = e.layer
 
-
-
             console.log('type', type);
 
-            if (type === 'marker') {
+            if (!type && e.layerType === 'marker') {
                 const { lat, lng } = layer.getLatLng()
                 const data = await fetchData([
                     { lat, lng }
