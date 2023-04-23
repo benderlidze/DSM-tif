@@ -19,6 +19,31 @@
 </body>
 <script>
 
+    //node usage
+    const coordinates = [
+        [-22.832906062124344, -47.66755677759648],
+        [-22.832906062124344, -47.66755677759648],
+        [-22.832906062124344, -47.66755677759648],
+        [-22.832906062124344, -47.66755677759648],
+    ];
+    fetch('http://127.0.0.1:3000/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(coordinates)
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        
+
+
     // Define the source and target coordinate systems
     const src = proj4.defs('EPSG:4326'); // Geographic coordinates (latitude and longitude)
     const dst = proj4.defs('EPSG:4326'); // Web Mercator projection
