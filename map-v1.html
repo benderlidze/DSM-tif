@@ -20,12 +20,28 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
+
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
     <style>
+        html,
+        body,
+        .leaflet-map {
+            height: 100%;
+            width: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+
         body {
+            display: flex;
+            flex-direction: column-reverse;
             margin: 0;
             padding: 0;
         }
+
 
         body,
         table,
@@ -183,8 +199,6 @@
                     drawPolyline.enable();
                 });
 
-
-
                 return container;
             },
             onRemove: function (map) { },
@@ -210,8 +224,11 @@
 
         map.on(L.Draw.Event.CREATED, async function (e) {
 
-            const type = e.layerType
+            console.log('e', e);
+            const type = e.layer.options.type
             const layer = e.layer
+
+
 
             console.log('type', type);
 
@@ -233,8 +250,7 @@
                         .openOn(map);
                 }
             }
-            if (type === 'polyline') {
-                console.log('layer', layer);
+            if (type === 'slope') {
                 const data = await fetchData(layer.getLatLngs())
                 if (data && data.length > 0) {
 
@@ -251,6 +267,63 @@
                     })
 
                 }
+            }
+            if (type === 'profile') {
+
+                const coords = layer.getLatLngs()
+                console.log('coords', coords);
+
+                const line = turf.lineString([
+                    [coords[0].lng, coords[0].lat],
+                    [coords[1].lng, coords[1].lat],
+                ]);
+                const chunk = turf.lineChunk(line, 0.01, { units: 'kilometers' });
+                console.log('chunk', chunk);
+                const points = chunk.features.map(d => {
+                    const [lng, lat] = d.geometry.coordinates[0]
+                    return { lng: +lng, lat: +lat }
+                })
+                points.push({ lng: +coords[1].lng, lat: +coords[1].lat }) //add last line coordinate
+
+                console.log('points', points);
+
+                const data = await fetchData(points)
+                if (data && data.length > 0) {
+
+
+                    const coords = [];
+                    data.forEach(d => {
+                        // const centerPopup = L.popup({
+                        //     className: 'popupCustom',
+                        //     closeOnClick: false,
+                        //     autoClose: false,
+                        //     closeButton: true,
+                        // })
+                        //     .setLatLng([d.lat, d.lng])
+                        //     .setContent(`${d.res.toFixed(2)}`)
+                        //     .openOn(map);
+
+                        coords.push([d.lng, d.lat, d.res])
+                    })
+
+                    const geom = {
+                        "name": "demo.geojson",
+                        "type": "FeatureCollection",
+                        "features": [{
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": coords
+                            },
+                            "properties": null
+                        }]
+                    }
+                    console.log('geom', geom);
+                    // Instantiate elevation control.
+                    controlElevation.addData(geom);
+                }
+
+
             }
             layer.addTo(map);
         });
@@ -300,6 +373,30 @@
                     console.error('Error:', error);
                 });
         }
+
+
+        // Full list options at "leaflet-elevation.js"
+        var elevation_options = {
+            theme: "lime-theme",
+            collapsed: false,
+            autohide: false,
+            autofitBounds: true,
+            position: "bottomleft",
+            detached: true,
+            summary: "inline",
+            imperial: false,
+            // altitude: "disabled",
+            slope: false,
+            speed: false,
+            acceleration: false,
+            time: true,
+            legend: true,
+            followMarker: true,
+            almostOver: true,
+            distanceMarkers: true,
+            hotline: false,
+        };
+        const controlElevation = L.control.elevation(elevation_options).addTo(map);
 
     </script>
 
