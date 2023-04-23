@@ -113,29 +113,100 @@
         var measure = L.control.measure({}).addTo(map);
 
 
-        var editableLayers = new L.FeatureGroup();
-        map.addLayer(editableLayers);
+        // var editableLayers = new L.FeatureGroup();
+        // map.addLayer(editableLayers);
 
-        var options = {
-            position: 'topright',
-            draw: {
-                polyline: {
-                    shapeOptions: {
-                        color: 'yellow',
-                        weight: 5
-                    }
-                },
-                polygon: false,
-                circle: false,
-                rectangle: false,
-                marker: true,
-                circlemarker: false
+        // var options = {
+        //     position: 'topright',
+        //     draw: {
+        //         polyline: {
+        //             shapeOptions: {
+        //                 color: 'yellow',
+        //                 weight: 5
+        //             }
+        //         },
+        //         polygon: false,
+        //         circle: false,
+        //         rectangle: false,
+        //         marker: true,
+        //         circlemarker: false
+        //     },
+        //     edit: false
+        // };
+
+        L.Control.Button = L.Control.extend({
+            options: {
+                position: 'topright'
             },
-            edit: false
-        };
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                container.style.padding = '10px';
+                container.style.backgroundColor = 'white';
 
+                const pin = L.DomUtil.create('button', 'leaflet-control-button', container);
+                pin.innerHTML = "Pin"
+                L.DomEvent.disableClickPropagation(pin);
+                L.DomEvent.on(pin, 'click', function () {
+                    var drawPolyline = new L.Draw.Marker(map, {
+                        shapeOptions: {
+                            type: "marker"
+                        }
+                    });
+                    drawPolyline.enable();
+                });
+
+                const button = L.DomUtil.create('button', 'leaflet-control-button', container);
+                button.innerHTML = "Slope"
+                L.DomEvent.disableClickPropagation(button);
+                L.DomEvent.on(button, 'click', function () {
+                    var drawPolyline = new L.Draw.Polyline(map, {
+                        shapeOptions: {
+                            color: 'red',
+                            weight: 5,
+                            type: "slope"
+                        }
+                    });
+                    drawPolyline.enable();
+                });
+
+                const line = L.DomUtil.create('button', 'leaflet-control-button', container);
+                line.innerHTML = "Profile"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(line, 'click', function () {
+                    var drawPolyline = new L.Draw.Polyline(map, {
+                        shapeOptions: {
+                            color: 'green',
+                            weight: 5,
+                            type: "profile"
+                        }
+                    });
+                    drawPolyline.enable();
+                });
+
+
+
+                return container;
+            },
+            onRemove: function (map) { },
+        });
+        var control = new L.Control.Button()
+        control.addTo(map);
+
+
+        // Add the control to the map
+
+        // map.on('draw:created', function (e) {
+        //     var type = e.layerType,
+        //         layer = e.layer;
+        //     layer.addTo(map);
+
+        //     console.log('e', e);
+        // });
+
+        /*
         var drawControl = new L.Control.Draw(options);
         map.addControl(drawControl);
+        */
 
         map.on(L.Draw.Event.CREATED, async function (e) {
 
@@ -181,8 +252,7 @@
 
                 }
             }
-
-            editableLayers.addLayer(layer);
+            layer.addTo(map);
         });
 
         // create fullscreen control
