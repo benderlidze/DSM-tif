@@ -35,7 +35,7 @@ async function getElevation(coordsArray) {
                     lat: c.lat,
                     lon: c.lng,
                     res: null,
-                    error: "Error"
+                    error: "Error:" + err
                 };
             });
         } catch (err) {
