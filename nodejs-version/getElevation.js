@@ -33,7 +33,7 @@ async function getElevation(coordsArray) {
             })).catch(err => {
                 return {
                     lat: c.lat,
-                    lon: c.lng,
+                    lng: c.lng,
                     res: null,
                     error: "Error:" + err
                 };

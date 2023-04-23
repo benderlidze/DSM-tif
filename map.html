@@ -92,8 +92,6 @@
         // Overlay layers (TMS)
         var lyr = L.tileLayer('https://trgeo.com.br/clientes/habcasa/comparador/data/20-01-23/saltinho/orthophoto/tiles/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
 
-
-
         // Map
         var map = L.map('map', {
             center: [-22.833077435460154, -47.66628056220449],
@@ -113,9 +111,6 @@
             squareKilometers: "km²",
         };
         var measure = L.control.measure({}).addTo(map);
-
-
-
 
 
         var editableLayers = new L.FeatureGroup();
@@ -147,31 +142,48 @@
             const type = e.layerType
             const layer = e.layer
 
+            console.log('type', type);
 
             if (type === 'marker') {
-
-                console.log('layer', layer);
                 const { lat, lng } = layer.getLatLng()
                 const data = await fetchData([
                     { lat, lng }
                 ])
-                console.log('data', data);
-                const centerPopup = L.popup({
-                    className: 'popupCustom',
-                    closeOnClick: false,
-                    autoClose: false,
-                    closeButton: true,
-                })
-                    .setLatLng(layer.getLatLng())
-                    .setContent("aaa")
-                    .openOn(map);
-
+                if (data && data[0]) {
+                    const elevation = data[0].res;
+                    const centerPopup = L.popup({
+                        className: 'popupCustom',
+                        closeOnClick: false,
+                        autoClose: false,
+                        closeButton: true,
+                    })
+                        .setLatLng(layer.getLatLng())
+                        .setContent(`${elevation.toFixed(2)}`)
+                        .openOn(map);
+                }
             }
+            if (type === 'polyline') {
+                console.log('layer', layer);
+                const data = await fetchData(layer.getLatLngs())
+                if (data && data.length > 0) {
+
+                    data.forEach(d => {
+                        const centerPopup = L.popup({
+                            className: 'popupCustom',
+                            closeOnClick: false,
+                            autoClose: false,
+                            closeButton: true,
+                        })
+                            .setLatLng([d.lat, d.lng])
+                            .setContent(`${d.res.toFixed(2)}`)
+                            .openOn(map);
+                    })
+
+                }
+            }
+
             editableLayers.addLayer(layer);
         });
-
-
-
 
         // create fullscreen control
         var fsControl = L.control.fullscreen();
@@ -185,7 +197,6 @@
         map.on('exitFullscreen', function () {
             if (window.console) window.console.log('exitFullscreen');
         });
-
 
         var controlLayers = L.control.layers(null, null, {
             position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
@@ -204,12 +215,8 @@
             controlLayers.addOverlay(geoJsonLayer, 'Projeto');  // insert your 'Title' to add to legend
         });
 
-
-
         async function fetchData(coords) {
-
             if (coords.length === 0) return;
-
             const coordinates = coords
             return fetch('http://191.252.111.193:3001/', {
                 method: 'POST',
@@ -217,7 +224,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data);
+                    return data
                 })
                 .catch(error => {
                     console.error('Error:', error);
