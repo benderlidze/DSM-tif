@@ -15,21 +15,37 @@ async function getElevation(coordsArray) {
     const metadata = await image.getFileDirectory();
 
     const promises = coordsArray.map(c => {
-        const [x, y] = proj4(src, dst, [c.lat, c.lng]);
-        // Calculate the pixel coordinates corresponding to the projected coordinates
-        const [pixelX, pixelY] = [
-            Math.round((x - metadata.ModelTiepoint[3]) / metadata.ModelPixelScale[0]),
-            Math.round((metadata.ModelTiepoint[4] - y) / metadata.ModelPixelScale[1])
-        ];
-        // Get the elevation data at the pixel coordinates
-        return image.readRasters({
-            window: [pixelX, pixelY, pixelX + 1, pixelY + 1],
-            interleave: true
-        }).then(res => ({
-            lat: c.lat,
-            lon: c.lng,
-            res: res[0]
-        }))
+        try {
+            const [x, y] = proj4(src, dst, [c.lat, c.lng]);
+            // Calculate the pixel coordinates corresponding to the projected coordinates
+            const [pixelX, pixelY] = [
+                Math.round((x - metadata.ModelTiepoint[3]) / metadata.ModelPixelScale[0]),
+                Math.round((metadata.ModelTiepoint[4] - y) / metadata.ModelPixelScale[1])
+            ];
+            // Get the elevation data at the pixel coordinates
+            return image.readRasters({
+                window: [pixelX, pixelY, pixelX + 1, pixelY + 1],
+                interleave: true
+            }).then(res => ({
+                lat: c.lat,
+                lon: c.lng,
+                res: res[0]
+            })).catch(err => {
+                return {
+                    lat: c.lat,
+                    lon: c.lng,
+                    res: null,
+                    error: "Error"
+                };
+            });
+        } catch (err) {
+            return {
+                lat: c.lat,
+                lon: c.lng,
+                res: null,
+                error: "Coordinates must be finite numbers"
+            };
+        }
     })
 
     const res = await Promise.all(promises)
