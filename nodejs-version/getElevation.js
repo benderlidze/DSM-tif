@@ -16,7 +16,7 @@ async function getElevation(coordsArray) {
 
     const promises = coordsArray.map(c => {
         try {
-            const [x, y] = proj4(src, dst, [c.lat, c.lng]);
+            const [x, y] = proj4(src, dst, [c.lng, c.lat]);
             // Calculate the pixel coordinates corresponding to the projected coordinates
             const [pixelX, pixelY] = [
                 Math.round((x - metadata.ModelTiepoint[3]) / metadata.ModelPixelScale[0]),
@@ -41,7 +41,7 @@ async function getElevation(coordsArray) {
         } catch (err) {
             return {
                 lat: c.lat,
-                lon: c.lng,
+                lng: c.lng,
                 res: null,
                 error: "Coordinates must be finite numbers"
             };

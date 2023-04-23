@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+    <title>dia1 dsm.tif</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" type="text/css" href="./src/leaflet.measure.css" />
+    <script type="text/javascript" src="./src/leaflet.measure.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@latest/Control.FullScreen.css" />
+    <script src="https://unpkg.com/leaflet.fullscreen@latest/Control.FullScreen.js"></script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body,
+        table,
+        tr,
+        td,
+        th,
+        div,
+        h1,
+        h2,
+        input {
+            font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif;
+            font-size: 11pt;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* full size */
+        .ctl {
+            padding: 2px 10px 2px 10px;
+            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            text-align: right;
+        }
+
+        .title {
+            font-size: 18pt;
+            font-weight: bold;
+        }
+
+        .src {
+            font-size: 10pt;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        /* **** Leaflet **** */
+
+        // Base layers
+        //  .. OpenStreetMap
+        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 15, maxZoom: 20 });
+
+        //  .. CartoDB Positron
+        var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>', minZoom: 15, maxZoom: 20 });
+
+        //  .. OSM Toner
+        var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', { attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.', minZoom: 15, maxZoom: 20 });
+
+        //  .. White background
+        var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", { minZoom: 15, maxZoom: 20 });
+
+        // Overlay layers (TMS)
+        var lyr = L.tileLayer('https://trgeo.com.br/clientes/habcasa/comparador/data/20-01-23/saltinho/orthophoto/tiles/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
+
+
+
+        // Map
+        var map = L.map('map', {
+            center: [-22.833077435460154, -47.66628056220449],
+            zoom: 18,
+            minZoom: 15,
+            maxZoom: 99,
+            layers: [osm, lyr]
+        });
+
+        L.Measure = {
+            linearMeasurement: "Medir Distância",
+            areaMeasurement: "Medir Área",
+            start: "início",
+            meter: "m",
+            kilometer: "km",
+            squareMeter: "m²",
+            squareKilometers: "km²",
+        };
+        var measure = L.control.measure({}).addTo(map);
+
+
+
+
+
+        var editableLayers = new L.FeatureGroup();
+        map.addLayer(editableLayers);
+
+        var options = {
+            position: 'topright',
+            draw: {
+                polyline: {
+                    shapeOptions: {
+                        color: '#f357a1',
+                        weight: 3
+                    }
+                },
+                polygon: false,
+                circle: false,
+                rectangle: false,
+                marker: true,
+                circleMarker: false
+            },
+            edit: false
+        };
+
+        var drawControl = new L.Control.Draw(options);
+        map.addControl(drawControl);
+
+        map.on(L.Draw.Event.CREATED, async function (e) {
+
+            const type = e.layerType
+            const layer = e.layer
+
+
+            if (type === 'marker') {
+
+                console.log('layer', layer);
+                const { lat, lng } = layer.getLatLng()
+                const data = await fetchData([
+                    { lat, lng }
+                ])
+                console.log('data', data);
+                const centerPopup = L.popup({
+                    className: 'popupCustom',
+                    closeOnClick: false,
+                    autoClose: false,
+                    closeButton: true,
+                })
+                    .setLatLng(layer.getLatLng())
+                    .setContent("aaa")
+                    .openOn(map);
+
+            }
+            editableLayers.addLayer(layer);
+        });
+
+
+
+
+        // create fullscreen control
+        var fsControl = L.control.fullscreen();
+        // add fullscreen control to the map
+        map.addControl(fsControl);
+
+        // detect fullscreen toggling
+        map.on('enterFullscreen', function () {
+            if (window.console) window.console.log('enterFullscreen');
+        });
+        map.on('exitFullscreen', function () {
+            if (window.console) window.console.log('exitFullscreen');
+        });
+
+
+        var controlLayers = L.control.layers(null, null, {
+            position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
+            collapsed: false // false = open by default
+        }).addTo(map);
+
+        $.getJSON("https://trgeo.com.br/clientes/habcasa/comparador/data/20-01-23/saltinho/orthophoto/tiles/src/habcasa.geojson", function (data) {
+            var geoJsonLayer = L.geoJson(data, {
+                style: function (feature) {
+                    return {
+                        'color': 'black',
+                        'weight': 1,
+                    }
+                },
+            });  // insert ".addTo(map)" to display layer by default
+            controlLayers.addOverlay(geoJsonLayer, 'Projeto');  // insert your 'Title' to add to legend
+        });
+
+
+
+        async function fetchData(coords) {
+
+            if (coords.length === 0) return;
+
+            const coordinates = coords
+            return fetch('http://191.252.111.193:3001/', {
+                method: 'POST',
+                body: JSON.stringify(coordinates)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+    </script>
+
+</body>
+
+</html>
