@@ -25,6 +25,7 @@
 
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
     <script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
+    <!-- <script src="src/leaflet-elevation.js"></script> -->
     <style>
         html,
         body,
@@ -172,19 +173,19 @@
                     drawPolyline.enable();
                 });
 
-                const button = L.DomUtil.create('button', 'leaflet-control-button', container);
-                button.innerHTML = "Slope"
-                L.DomEvent.disableClickPropagation(button);
-                L.DomEvent.on(button, 'click', function () {
-                    var drawPolyline = new L.Draw.Polyline(map, {
-                        shapeOptions: {
-                            color: 'red',
-                            weight: 5,
-                            type: "slope",
-                        },
-                    });
-                    drawPolyline.enable();
-                });
+                // const button = L.DomUtil.create('button', 'leaflet-control-button', container);
+                // button.innerHTML = "Slope"
+                // L.DomEvent.disableClickPropagation(button);
+                // L.DomEvent.on(button, 'click', function () {
+                //     var drawPolyline = new L.Draw.Polyline(map, {
+                //         shapeOptions: {
+                //             color: 'red',
+                //             weight: 5,
+                //             type: "slope",
+                //         },
+                //     });
+                //     drawPolyline.enable();
+                // });
 
                 const line = L.DomUtil.create('button', 'leaflet-control-button', container);
                 line.innerHTML = "Profile"
@@ -254,27 +255,28 @@
                     })
                         .setLatLng(layer.getLatLng())
                         .setContent(`${elevation.toFixed(2)}`)
-                        .openOn(map);
+
+                    layerGroup.addLayer(centerPopup)
                 }
             }
-            if (type === 'slope') {
-                const data = await fetchData(layer.getLatLngs())
-                if (data && data.length > 0) {
+            // if (type === 'slope') {
+            //     const data = await fetchData(layer.getLatLngs())
+            //     if (data && data.length > 0) {
 
-                    data.forEach(d => {
-                        const centerPopup = L.popup({
-                            className: 'popupCustom',
-                            closeOnClick: false,
-                            autoClose: false,
-                            closeButton: true,
-                        })
-                            .setLatLng([d.lat, d.lng])
-                            .setContent(`${d.res.toFixed(2)}`)
-                            .openOn(map);
-                    })
+            //         data.forEach(d => {
+            //             const centerPopup = L.popup({
+            //                 className: 'popupCustom',
+            //                 closeOnClick: false,
+            //                 autoClose: false,
+            //                 closeButton: true,
+            //             })
+            //                 .setLatLng([d.lat, d.lng])
+            //                 .setContent(`${d.res.toFixed(2)}`)
+            //                 .openOn(map);
+            //         })
 
-                }
-            }
+            //     }
+            // }
             if (type === 'profile') {
 
                 const coords = layer.getLatLngs()
@@ -356,6 +358,8 @@
                     layerGroup.addLayer(m1)
                     layerGroup.addLayer(m2)
                     console.log('layerGroup', layerGroup);
+
+                    controlElevation._expand()
                 }
             }
 
@@ -364,6 +368,7 @@
 
         function clearProfile() {
             controlElevation.clear()
+            controlElevation._collapse()
             layerGroup.clearLayers() //remove prev
         }
 
@@ -417,7 +422,7 @@
         // Full list options at "leaflet-elevation.js"
         var elevation_options = {
             theme: "lime-theme",
-            collapsed: false,
+            collapsed: true,
             autohide: false,
             autofitBounds: true,
             position: "bottomleft",
@@ -434,9 +439,52 @@
             almostOver: true,
             distanceMarkers: true,
             hotline: false,
-            
+            decimalsY: 2,
+
         };
+
+        const toPrecision = (x, n) => parseFloat(x).toFixed(n);
+        // Save a reference of default "L.Control.Elevation" (for later use)
+        const elevationProto = L.extend({}, L.Control.Elevation.prototype);
+        // Override default "_registerHandler" behaviour.
+        L.Control.Elevation.include({
+            // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/control.js#L1063-L1128
+            _registerHandler: function (props) {
+                if (typeof props === 'object') {
+                    console.log('props.name', props.name);
+                    switch (props.name) {
+                        // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/handlers/acceleration.js#L41-L61
+                        case 'distance':
+                            //let label = this.options.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
+                            props.tooltip.chart = (item) => item.dist * 1000 + ' m';
+                            props.tooltip.marker = (item) => item.dist * 1000 + ' m';
+                            break;
+                    }
+
+                }
+                elevationProto._registerHandler.apply(this, [props]);
+            }
+        });
+
+
         const controlElevation = L.control.elevation(elevation_options).addTo(map);
+
+
+        controlElevation.on('elechart_hover', () => {
+            // line size to fixed height 
+            const group = d3.select(".height-focus-group");
+            const line = group.select("line")
+            const text = group.select("text")
+            const y1 = line.attr("y1")
+            const y2 = line.attr("y2")
+            const newHeight = y1 - 100
+            line.attr("y2", newHeight)
+            text.attr("y", newHeight)
+
+
+
+        });
+
 
     </script>
 
