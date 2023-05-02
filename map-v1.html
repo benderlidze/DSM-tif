@@ -90,8 +90,8 @@
     <div id="map"></div>
 
     <script>
+        const elevation = {}
         /* **** Leaflet **** */
-
         // Base layers
         //  .. OpenStreetMap
         var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 15, maxZoom: 20 });
@@ -128,7 +128,7 @@
         };
         var measure = L.control.measure({}).addTo(map);
 
-
+        const layerGroup = L.layerGroup().addTo(map);
         // var editableLayers = new L.FeatureGroup();
         // map.addLayer(editableLayers);
 
@@ -150,6 +150,7 @@
         //     edit: false
         // };
 
+
         L.Control.Button = L.Control.extend({
             options: {
                 position: 'topright'
@@ -166,7 +167,7 @@
                     var drawPolyline = new L.Draw.Marker(map, {
                         shapeOptions: {
                             type: "marker"
-                        }
+                        },
                     });
                     drawPolyline.enable();
                 });
@@ -179,8 +180,8 @@
                         shapeOptions: {
                             color: 'red',
                             weight: 5,
-                            type: "slope"
-                        }
+                            type: "slope",
+                        },
                     });
                     drawPolyline.enable();
                 });
@@ -191,12 +192,20 @@
                 L.DomEvent.on(line, 'click', function () {
                     var drawPolyline = new L.Draw.Polyline(map, {
                         shapeOptions: {
-                            color: 'green',
+                            color: 'red',
                             weight: 5,
-                            type: "profile"
-                        }
+                            type: "profile",
+                        },
+                        maxPoints: 2,
                     });
                     drawPolyline.enable();
+                });
+
+                const clearLayer = L.DomUtil.create('button', 'leaflet-control-button', container);
+                clearLayer.innerHTML = "Clear ALL"
+                L.DomEvent.disableClickPropagation(clearLayer);
+                L.DomEvent.on(clearLayer, 'click', function () {
+                    clearProfile()
                 });
 
                 return container;
@@ -288,27 +297,26 @@
                 const data = await fetchData(points)
                 if (data && data.length > 0) {
 
+                    clearProfile() //remove prev
 
-                    L.popup({
+                    console.log('data', data);
+                    const m1 = L.popup({
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
                         closeButton: true,
                     })
                         .setLatLng(startEnd[0].reverse())
-                        .setContent(`A`)
-                        .openOn(map);
+                        .setContent(`${data[0].res.toFixed(2)}`)
 
-                    L.popup({
+                    const m2 = L.popup({
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
                         closeButton: true,
                     })
                         .setLatLng(startEnd[1].reverse())
-                        .setContent(`B`)
-                        .openOn(map);
-
+                        .setContent(`${data[data.length - 1].res.toFixed(2)}`)
 
                     const coords = [];
                     data.forEach(d => {
@@ -339,12 +347,25 @@
                     console.log('geom', geom);
                     // Instantiate elevation control.
                     controlElevation.addData(geom);
+
+                    // layer.addTo(map);
+                    // m1.addTo(map)
+                    // m2.addTo(map)
+
+                    layerGroup.addLayer(layer)
+                    layerGroup.addLayer(m1)
+                    layerGroup.addLayer(m2)
+                    console.log('layerGroup', layerGroup);
                 }
-
-
             }
-            layer.addTo(map);
+
+            console.log('layer', layer);
         });
+
+        function clearProfile() {
+            controlElevation.clear()
+            layerGroup.clearLayers() //remove prev
+        }
 
         // create fullscreen control
         var fsControl = L.control.fullscreen();
@@ -407,12 +428,13 @@
             slope: false,
             speed: false,
             acceleration: false,
-            time: true,
+            time: false,
             legend: true,
             followMarker: true,
             almostOver: true,
             distanceMarkers: true,
             hotline: false,
+            
         };
         const controlElevation = L.control.elevation(elevation_options).addTo(map);
 
