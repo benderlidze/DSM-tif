@@ -286,7 +286,7 @@
                     [coords[1].lng, coords[1].lat],
                 ]
                 const line = turf.lineString(startEnd);
-                const chunk = turf.lineChunk(line, 0.01, { units: 'kilometers' });
+                const chunk = turf.lineChunk(line, 0.001, { units: 'kilometers' });
                 console.log('chunk', chunk);
                 const points = chunk.features.map(d => {
                     const [lng, lat] = d.geometry.coordinates[0]
