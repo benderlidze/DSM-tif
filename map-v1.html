@@ -87,7 +87,7 @@
         }
 
         .leaflet-popup-content {
-            margin: 2px 4px !important;
+            margin: 1px 18px !important;
             text-align: center;
         }
 
@@ -101,6 +101,16 @@
 
         .elevation-summary.inline-summary {
             display: none !important;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            color: #ff0000 !important;
+        }
+
+
+        .leaflet-measure-expanded {
+            min-width: 140px !important;
         }
     </style>
 
@@ -177,9 +187,8 @@
                 position: 'topright'
             },
             onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-control-measure leaflet-bar leaflet-control leaflet-measure-expanded');
-                container.style.padding = '10px';
-                container.style.backgroundColor = 'white';
+                var mainContainer = L.DomUtil.create('div', ' leaflet-control-measure leaflet-bar leaflet-control leaflet-measure-expanded');
+                var container = L.DomUtil.create('div', 'leaflet-measure-contents', mainContainer);
 
                 const pin = L.DomUtil.create('a', 'start', container);
                 pin.innerHTML = "Pin"
@@ -231,7 +240,7 @@
                     clearProfile()
                 });
 
-                return container;
+                return mainContainer;
             },
             onRemove: function (map) { },
         });
@@ -274,10 +283,13 @@
                 // const res = proj4.transform(proj4.WGS84, dest, p);      //do the transformation.  x and y are modified in place
                 // console.log('res', res);
                 // const { x, y } = res
-                var utm = "+proj=utm +zone=32";
-                var wgs84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-                const res = proj4(wgs84, utm, [lng, lat])
+                var utm = "+proj=utm +zone=23 -I +south +datum=WGS84 +units=m +no_defs";
+                var wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
+                const res = proj4(wgs84, utm, [-47.666721940040595, -22.833089610398982])
+                console.log(res)
                 const [x, y] = res
+
+                console.log('lat,lng', lat, lng);
 
                 if (data && data[0]) {
 
@@ -286,12 +298,12 @@
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
-                        closeButton: false,
+                        closeButton: true,
                     })
                         .setLatLng(layer.getLatLng())
                         .setContent(`
-                            <div>X ${x.toFixed(2)}</div>
-                            <div>Y ${y.toFixed(2)}</div>
+                            <div>E ${x.toFixed(2)}</div>
+                            <div>N ${y.toFixed(2)}</div>
                             <div>Z ${elevation.toFixed(2)}</div>
                         `)
 
