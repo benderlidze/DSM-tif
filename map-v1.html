@@ -26,6 +26,9 @@
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
     <script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
     <!-- <script src="src/leaflet-elevation.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"
+        integrity="sha512-lO8f7sIViqr9x5VE6Q72PS6f4FoZcuh5W9YzeSyfNRJ9z/qL3bkweiwG6keGzWS0BQzNDqAWXdBhYzFD6KffIw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         html,
         body,
@@ -81,6 +84,23 @@
 
         .src {
             font-size: 10pt;
+        }
+
+        .leaflet-popup-content {
+            margin: 2px 4px !important;
+            text-align: center;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 3px;
+        }
+
+        .leaflet-popup-tip {
+            margin: -17px auto 0 !important;
+        }
+
+        .elevation-summary.inline-summary {
+            display: none !important;
         }
     </style>
 
@@ -157,12 +177,13 @@
                 position: 'topright'
             },
             onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var container = L.DomUtil.create('div', 'leaflet-control-measure leaflet-bar leaflet-control leaflet-measure-expanded');
                 container.style.padding = '10px';
                 container.style.backgroundColor = 'white';
 
-                const pin = L.DomUtil.create('button', 'leaflet-control-button', container);
+                const pin = L.DomUtil.create('a', 'start', container);
                 pin.innerHTML = "Pin"
+                pin.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(pin);
                 L.DomEvent.on(pin, 'click', function () {
                     var drawPolyline = new L.Draw.Marker(map, {
@@ -187,14 +208,15 @@
                 //     drawPolyline.enable();
                 // });
 
-                const line = L.DomUtil.create('button', 'leaflet-control-button', container);
-                line.innerHTML = "Profile"
+                const line = L.DomUtil.create('a', 'start', container);
+                line.innerHTML = `Profile`
+                line.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(line);
                 L.DomEvent.on(line, 'click', function () {
                     var drawPolyline = new L.Draw.Polyline(map, {
                         shapeOptions: {
-                            color: 'red',
-                            weight: 5,
+                            color: 'yellow',
+                            weight: 3,
                             type: "profile",
                         },
                         maxPoints: 2,
@@ -245,16 +267,33 @@
                 const data = await fetchData([
                     { lat, lng }
                 ])
+
+                // var source = new proj4.Proj('EPSG:4326');    //source coordinates will be in Longitude/Latitude, WGS84
+                // var dest = new proj4.Proj("+proj=utm +zone=33 +ellps=intl +units=m +no_defs"); // see http://spatialreference.org/ref/epsg/2078/
+                // var p = new proj4.Point(lng, lat);   //any object will do as long as it has 'x' and 'y' properties
+                // const res = proj4.transform(proj4.WGS84, dest, p);      //do the transformation.  x and y are modified in place
+                // console.log('res', res);
+                // const { x, y } = res
+                var utm = "+proj=utm +zone=32";
+                var wgs84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+                const res = proj4(wgs84, utm, [lng, lat])
+                const [x, y] = res
+
                 if (data && data[0]) {
+
                     const elevation = data[0].res;
                     const centerPopup = L.popup({
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
-                        closeButton: true,
+                        closeButton: false,
                     })
                         .setLatLng(layer.getLatLng())
-                        .setContent(`${elevation.toFixed(2)}`)
+                        .setContent(`
+                            <div>X ${x.toFixed(2)}</div>
+                            <div>Y ${y.toFixed(2)}</div>
+                            <div>Z ${elevation.toFixed(2)}</div>
+                        `)
 
                     layerGroup.addLayer(centerPopup)
                 }
@@ -306,7 +345,7 @@
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
-                        closeButton: true,
+                        closeButton: false
                     })
                         .setLatLng(startEnd[0].reverse())
                         .setContent(`${data[0].res.toFixed(2)}`)
@@ -315,7 +354,7 @@
                         className: 'popupCustom',
                         closeOnClick: false,
                         autoClose: false,
-                        closeButton: true,
+                        closeButton: false
                     })
                         .setLatLng(startEnd[1].reverse())
                         .setContent(`${data[data.length - 1].res.toFixed(2)}`)
@@ -360,6 +399,10 @@
                     console.log('layerGroup', layerGroup);
 
                     controlElevation._expand()
+
+                    const element = document.querySelector(".elevation-summary.inline-summary")
+                    // element.setAttribute('style', 'display:inline !important');
+                    element.style.setProperty('display', 'inline', 'important');
                 }
             }
 
@@ -370,6 +413,9 @@
             controlElevation.clear()
             controlElevation._collapse()
             layerGroup.clearLayers() //remove prev
+
+            const element = document.querySelector(".elevation-summary.inline-summary")
+            element.style.setProperty('display', 'none', 'important');
         }
 
         // create fullscreen control
@@ -486,9 +532,15 @@
                 const slope = Math.abs((((s1 - s2) / distance) * 100)).toFixed(2)
 
                 setTimeout(() => {
+                    document.querySelector(".totlen .summarylabel").innerHTML = `Total Length: `;
                     document.querySelector(".totlen .summaryvalue").innerHTML = distance.toFixed(2) + "m"
+
+                    document.querySelector(".minele .summarylabel").innerHTML = `Min Elevation: `
                     document.querySelector(".minele .summaryvalue").innerHTML = s1.toFixed(2) + "m"
+
+                    document.querySelector(".maxele .summarylabel").innerHTML = `Max Elevation: `
                     document.querySelector(".maxele .summaryvalue").innerHTML = s2.toFixed(2) + "m"
+
                     document.querySelector(".avgele .summarylabel").innerHTML = "Slope: "
                     document.querySelector(".avgele .summaryvalue").innerHTML = slope + "%"
                 }, 100)
