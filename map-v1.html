@@ -542,6 +542,10 @@
             hotline: false,
             decimalsY: 2,
 
+            //convert to meters 
+            xLabel: "m",
+            distanceFactor: 1000
+
         };
 
         const toPrecision = (x, n) => parseFloat(x).toFixed(n);
@@ -558,8 +562,8 @@
                         // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/handlers/acceleration.js#L41-L61
                         case 'distance':
                             //let label = this.options.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
-                            props.tooltip.chart = (item) => item.dist * 1000 + ' m';
-                            props.tooltip.marker = (item) => item.dist * 1000 + ' m';
+                            props.tooltip.chart = (item) => item.dist + ' m';
+                            props.tooltip.marker = (item) => item.dist + ' m';
                             break;
                     }
 
