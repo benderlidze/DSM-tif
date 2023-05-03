@@ -190,6 +190,9 @@
                 var mainContainer = L.DomUtil.create('div', ' leaflet-control-measure leaflet-bar leaflet-control leaflet-measure-expanded');
                 var container = L.DomUtil.create('div', 'leaflet-measure-contents', mainContainer);
 
+                const h1 = L.DomUtil.create('h3', '', container);
+                h1.innerHTML = "Elevation"
+
                 const pin = L.DomUtil.create('a', 'start', container);
                 pin.innerHTML = "Pin"
                 pin.style.cursor = "pointer"
@@ -233,8 +236,10 @@
                     drawPolyline.enable();
                 });
 
-                const clearLayer = L.DomUtil.create('button', 'leaflet-control-button', container);
-                clearLayer.innerHTML = "Clear ALL"
+                const clearLayer = L.DomUtil.create('div', 'leaflet-control-button', container);
+                clearLayer.innerHTML = "Limpar"
+                clearLayer.style.cursor = "pointer"
+                clearLayer.style.fontWeight = "bold"
                 L.DomEvent.disableClickPropagation(clearLayer);
                 L.DomEvent.on(clearLayer, 'click', function () {
                     clearProfile()
