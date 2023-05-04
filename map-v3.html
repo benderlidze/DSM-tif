@@ -224,6 +224,7 @@
                 pin.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(pin);
                 L.DomEvent.on(pin, 'click', function () {
+                    L.drawLocal.draw.handlers.marker.tooltip.start = '';
                     var drawPolyline = new L.Draw.Marker(map, {
                         shapeOptions: {
                             type: "marker"
@@ -251,6 +252,8 @@
                 line.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(line);
                 L.DomEvent.on(line, 'click', function () {
+                    L.drawLocal.draw.handlers.polyline.tooltip.start = '';
+                    L.drawLocal.draw.handlers.polyline.tooltip.cont = '';
                     var drawPolyline = new L.Draw.Polyline(map, {
                         shapeOptions: {
                             color: 'yellow',
