@@ -55,18 +55,19 @@
             this._buildItems();
         },
         _buildItems: function () {
+
             var ele_ul = L.DomUtil.create("ul", "leaflet-measure-actions", this._contents);
             var ele_li = L.DomUtil.create("li", "leaflet-measure-action", ele_ul);
             var ele_link_line = L.DomUtil.create("a", "start", ele_li);
             ele_link_line.innerText = L.Measure.linearMeasurement;
-            ele_link_line.href = "#";
+            ele_link_line.style.cursor = "pointer";
             L.DomEvent.disableClickPropagation(ele_link_line);
             L.DomEvent.on(ele_link_line, "click", this._enableMeasureLine, this);
 
             ele_li = L.DomUtil.create("li", "leaflet-measure-action", ele_ul);
             var ele_link_area = L.DomUtil.create("a", "leaflet-measure-action start", ele_li);
             ele_link_area.innerText = L.Measure.areaMeasurement;
-            ele_link_area.href = "#";
+            ele_link_area.style.cursor = "pointer";
             L.DomEvent.disableClickPropagation(ele_link_area);
             L.DomEvent.on(ele_link_area, "click", this._enableMeasureArea, this);
         },
@@ -221,12 +222,13 @@
         addHooks: function () {
             this._activeMeasure();
         },
-        removeHooks: function () {},
+        removeHooks: function () { },
         _activeMeasure: function () {
             this._map._measureHandler._measurementStarted && this._map._measureHandler._finishMeasure();
             this._measurementStarted ? this._finishMeasure() : this._enableMeasure();
         },
         _onMouseClick: function (event) {
+
             var latlng = event.latlng || this._map.mouseEventToLatLng(event);
             if (this._lastPoint && latlng.equals(this._lastPoint)) {
                 return;
@@ -426,9 +428,9 @@
         _getAreaString: function (points) {
             var a = (this._getArea(points));
             var b = this._numberFormat(a, 2).split(",");
-            var c = Number(b[1]) === 0 ? "":Number(b[1]);
-            b[1]=c;
-           if(b[1]==="") b.pop(); 
+            var c = Number(b[1]) === 0 ? "" : Number(b[1]);
+            b[1] = c;
+            if (b[1] === "") b.pop();
             return a < 1e6
                 ? b.join(",") + " " + L.Measure.squareMeter
                 : this._numberFormat(a / 1e4, 4) + " " + L.Measure.squareKilometers;
@@ -446,8 +448,8 @@
                 x1 = x2;
                 y1 = y2;
             }
-             var value = Math.abs((area * earthRadius * earthRadius) / 2.0);
-             return value;
+            var value = Math.abs((area * earthRadius * earthRadius) / 2.0);
+            return value;
         },
         _numberFormat: function (number, decimals = 2) {
             var thousandsSep = ".";
@@ -462,9 +464,9 @@
                 intPart.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousandsSep),
                 decimals
                     ? "," +
-                      Math.abs(num - intPart)
-                          .toFixed(decimals)
-                          .slice(2)
+                    Math.abs(num - intPart)
+                        .toFixed(decimals)
+                        .slice(2)
                     : "",
             ].join("");
         },
