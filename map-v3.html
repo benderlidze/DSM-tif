@@ -124,6 +124,7 @@
             position: absolute !important;
             bottom: 0px !important;
         }
+
         .elevation-collapsed {
             position: absolute !important;
             bottom: 0px !important;
@@ -559,6 +560,7 @@
             collapsed: false // false = open by default
         }).addTo(map);
 
+
         $.getJSON("src/curvas.geojson", function (data) {
             var geoJsonLayer = L.geoJson(data, {
                 style: function (feature) {
@@ -567,12 +569,13 @@
                         'weight': 1,
                     }
                 },
-
-            }).bindPopup(function (controlLayers) {
-                return controlLayers.feature.properties.Contour;
-
-            });  // insert ".addTo(map)" to display layer by default
-
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup('<h1 style="margin:3px;">' + layer.feature.properties.Contour + '</h1>', {
+                        autoClose: true,
+                        closeButton: false,
+                    });
+                }
+            })
             controlLayers.addOverlay(geoJsonLayer, 'Curvas');  // insert your 'Title' to add to legend
         });
 
