@@ -30,6 +30,7 @@
         integrity="sha512-lO8f7sIViqr9x5VE6Q72PS6f4FoZcuh5W9YzeSyfNRJ9z/qL3bkweiwG6keGzWS0BQzNDqAWXdBhYzFD6KffIw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    <script src="html2canvas.min.js"></script>
     <style>
         html,
         body {
@@ -115,9 +116,13 @@
             top: -50px !important;
         }
 
-        .elevation-expanded{
+        .elevation-expanded {
             position: absolute !important;
             bottom: 0px !important;
+        }
+
+        .leaflet-popup-content-wrapper{
+            box-shadow: none !important;
         }
     </style>
 
@@ -126,6 +131,15 @@
 <body>
 
     <div id="map"></div>
+    <script>
+        HTMLCanvasElement.prototype.getContext = function (origFn) {
+            return function (type, attribs) {
+                attribs = attribs || {};
+                attribs.preserveDrawingBuffer = true;
+                return origFn.call(this, type, attribs);
+            };
+        }(HTMLCanvasElement.prototype.getContext);
+    </script>
 
     <script>
         const elevation = {}
@@ -153,7 +167,8 @@
             zoom: 16,
             minZoom: 15,
             maxZoom: 99,
-            layers: [osm, lyr]
+            layers: [osm, lyr],
+            renderer: L.canvas()
         });
 
         L.Measure = {
@@ -251,6 +266,34 @@
                 L.DomEvent.disableClickPropagation(clearLayer);
                 L.DomEvent.on(clearLayer, 'click', function () {
                     clearProfile()
+                });
+
+
+                const screenshot = L.DomUtil.create('div', 'leaflet-control-button', container);
+                screenshot.innerHTML = "screenshot"
+                screenshot.style.cursor = "pointer"
+                screenshot.style.fontWeight = "bold"
+                L.DomEvent.disableClickPropagation(clearLayer);
+                L.DomEvent.on(screenshot, 'click', function () {
+
+                    var html2canvasConfiguration = {
+                        useCORS: true,
+                        width: map._size.x,
+                        height: map._size.y,
+                        backgroundColor: null,
+                        logging: true,
+                        imageTimeout: 0
+                    };
+
+                    var elementToCapture = document.body
+                    html2canvas(elementToCapture, html2canvasConfiguration).then(function (canvas) {
+                        var link = document.createElement('a');
+                        link.download = 'test.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        link.remove();
+                    })
+
                 });
 
                 return mainContainer;
