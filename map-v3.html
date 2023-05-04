@@ -31,6 +31,10 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script src="html2canvas.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+
     <style>
         html,
         body {
@@ -121,7 +125,7 @@
             bottom: 0px !important;
         }
 
-        .leaflet-popup-content-wrapper{
+        .leaflet-popup-content-wrapper {
             box-shadow: none !important;
         }
     </style>
@@ -163,7 +167,6 @@
         // Map
         var map = L.map('map', {
             center: [-21.756808647996323, -48.08558966771166],
-
             zoom: 16,
             minZoom: 15,
             maxZoom: 99,
@@ -269,39 +272,15 @@
                 });
 
 
-                const screenshot = L.DomUtil.create('div', 'leaflet-control-button', container);
-                screenshot.innerHTML = "screenshot"
-                screenshot.style.cursor = "pointer"
-                screenshot.style.fontWeight = "bold"
-                L.DomEvent.disableClickPropagation(clearLayer);
-                L.DomEvent.on(screenshot, 'click', function () {
-
-                    var html2canvasConfiguration = {
-                        useCORS: true,
-                        width: map._size.x,
-                        height: map._size.y,
-                        backgroundColor: null,
-                        logging: true,
-                        imageTimeout: 0
-                    };
-
-                    var elementToCapture = document.body
-                    html2canvas(elementToCapture, html2canvasConfiguration).then(function (canvas) {
-                        var link = document.createElement('a');
-                        link.download = 'test.png';
-                        link.href = canvas.toDataURL();
-                        link.click();
-                        link.remove();
-                    })
-
-                });
-
                 return mainContainer;
             },
             onRemove: function (map) { },
         });
         var control = new L.Control.Button()
         control.addTo(map);
+
+
+
 
 
         // Add the control to the map
@@ -532,6 +511,28 @@
             collapsed: false // false = open by default
         }).addTo(map);
 
+        var icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACwSURBVDhP7dA/DgFBHMXxX0docAKJgjvQURDx5zhU4gz+HMldNlEQCo3wfTMrGStDbKPxkk/yZu28bNiHrLDxNV/+A78YKKPhq0t2QL/pnWiaOGDkTmZrbH21IY5ouVOQOYq+ukxwRQcLLNFOn03xSAEzlRtqKkH0BXvsUupjhKlCd+2cHrLpQy/IQA8yqeCkEhtQuuj5+pKngbf/bCQluIEL6tDiN3RHdy2BlnKw5A7snzPtGRZkcwAAAABJRU5ErkJggg=='
+        L.easyButton('<img class="zoom-out zoom-btn" src="' + icon + '" alt="zoom in"/>', function (btn, map) {
+            var html2canvasConfiguration = {
+                useCORS: true,
+                width: map._size.x,
+                height: map._size.y,
+                backgroundColor: null,
+                logging: true,
+                imageTimeout: 0
+            };
+
+            var elementToCapture = document.body
+            html2canvas(elementToCapture, html2canvasConfiguration).then(function (canvas) {
+                var link = document.createElement('a');
+                link.download = 'test.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                link.remove();
+            })
+        }).addTo(map);
+
+
         $.getJSON("src/edificacoes.geojson", function (data) {
             var geoJsonLayer = L.geoJson(data, {
                 style: function (feature) {
@@ -689,6 +690,8 @@
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text);
         }
+
+
 
 
     </script>
