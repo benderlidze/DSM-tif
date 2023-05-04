@@ -158,7 +158,7 @@
         var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", { minZoom: 15, maxZoom: 20 });
 
         // Overlay layers (TMS)
-        var lyr = L.tileLayer('./{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
+        var lyr = L.tileLayer('https://trgeo.com.br/clientes/saomartinho/imagem/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
 
         // Map
         var map = L.map('map', {
