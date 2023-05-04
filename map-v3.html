@@ -133,6 +133,23 @@
         .leaflet-popup-content-wrapper {
             box-shadow: none !important;
         }
+
+        .elevation-expanded>.elevation-toggle-icon {
+            top: 5px !important;
+        }
+
+        .leaflet-center {
+            /* border: 1px solid red; */
+            width: 100%;
+            height: 300px;
+            left: 50%;
+            transform: translate(-50%, 0%);
+        }
+
+        .custom-control {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 
 </head>
@@ -169,6 +186,33 @@
         // Overlay layers (TMS)
         var lyr = L.tileLayer('https://trgeo.com.br/clientes/saomartinho/imagem/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
 
+
+        L.Map.include({
+            _initControlPos: function () {
+                var corners = this._controlCorners = {},
+                    l = 'leaflet-',
+                    container = this._controlContainer =
+                        L.DomUtil.create('div', l + 'control-container', this._container);
+
+                function createCorner(vSide, hSide) {
+                    var className = l + vSide + ' ' + l + hSide;
+
+                    corners[vSide + hSide] = L.DomUtil.create('div', className, container);
+                }
+
+                createCorner('top', 'left');
+                createCorner('top', 'right');
+                createCorner('bottom', 'left');
+                createCorner('bottom', 'right');
+
+                // createCorner('top', 'center');
+                // createCorner('middle', 'center');
+                // createCorner('middle', 'left');
+                // createCorner('middle', 'right');
+                createCorner('bottom', 'center');
+            }
+        });
+
         // Map
         var map = L.map('map', {
             center: [-21.756808647996323, -48.08558966771166],
@@ -178,6 +222,15 @@
             layers: [osm, lyr],
             renderer: L.canvas()
         });
+
+        const legend = L.control({ position: 'bottomcenter' });
+        let legendDiv;
+        legend.onAdd = function (map) {
+            legendDiv = L.DomUtil.create('div', 'custom-control');
+            //div.append(controlElevation.eleDiv)
+            return legendDiv;
+        };
+        legend.addTo(map);
 
         L.Measure = {
             linearMeasurement: "Medir Distância",
@@ -211,7 +264,6 @@
         //     },
         //     edit: false
         // };
-
 
         L.Control.Button = L.Control.extend({
             options: {
@@ -278,8 +330,6 @@
                 L.DomEvent.on(clearLayer, 'click', function () {
                     clearProfile()
                 });
-
-
                 return mainContainer;
             },
             onRemove: function (map) { },
@@ -287,24 +337,6 @@
         var control = new L.Control.Button()
         control.addTo(map);
 
-
-
-
-
-        // Add the control to the map
-
-        // map.on('draw:created', function (e) {
-        //     var type = e.layerType,
-        //         layer = e.layer;
-        //     layer.addTo(map);
-
-        //     console.log('e', e);
-        // });
-
-        /*
-        var drawControl = new L.Control.Draw(options);
-        map.addControl(drawControl);
-        */
 
         map.on(L.Draw.Event.CREATED, async function (e) {
 
@@ -319,8 +351,6 @@
                 const data = await fetchData([
                     { lat, lng }
                 ])
-
-
 
                 // var source = new proj4.Proj('EPSG:4326');    //source coordinates will be in Longitude/Latitude, WGS84
                 // var dest = new proj4.Proj("+proj=utm +zone=33 +ellps=intl +units=m +no_defs"); // see http://spatialreference.org/ref/epsg/2078/
@@ -480,6 +510,8 @@
                     layerGroup.addLayer(m1)
                     layerGroup.addLayer(m2)
                     console.log('layerGroup', layerGroup);
+
+                    legendDiv.append(controlElevation.eleDiv)
 
                     controlElevation._expand()
 
