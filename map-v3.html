@@ -30,24 +30,11 @@
         integrity="sha512-lO8f7sIViqr9x5VE6Q72PS6f4FoZcuh5W9YzeSyfNRJ9z/qL3bkweiwG6keGzWS0BQzNDqAWXdBhYzFD6KffIw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <script src="https://igor-vladyka.github.io/leaflet.browser.print/dist/leaflet.browser.print.js"></script>
     <style>
         html,
-        body,
-        .leaflet-map {
-            height: 100%;
-            width: 100%;
-            padding: 0px;
-            margin: 0px;
-        }
-
         body {
-            display: flex;
-            flex-direction: column-reverse;
             margin: 0;
-            padding: 0;
         }
-
 
         body,
         table,
@@ -63,10 +50,8 @@
         }
 
         #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
+            width: 100vw;
+            height: 100vh;
         }
 
         /* full size */
@@ -124,6 +109,16 @@
             text-align: left !important;
             padding-left: 3px;
         }
+
+        .elevation-toggle-icon {
+            position: absolute !important;
+            top: -50px !important;
+        }
+
+        .elevation-expanded{
+            position: absolute !important;
+            bottom: 0px !important;
+        }
     </style>
 
 </head>
@@ -149,12 +144,13 @@
         var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", { minZoom: 15, maxZoom: 20 });
 
         // Overlay layers (TMS)
-        var lyr = L.tileLayer('https://trgeo.com.br/clientes/habcasa/comparador/data/20-01-23/saltinho/orthophoto/tiles/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
+        var lyr = L.tileLayer('./{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
 
         // Map
         var map = L.map('map', {
-            center: [-22.833077435460154, -47.66628056220449],
-            zoom: 18,
+            center: [-21.756808647996323, -48.08558966771166],
+
+            zoom: 16,
             minZoom: 15,
             maxZoom: 99,
             layers: [osm, lyr]
@@ -203,10 +199,10 @@
                 var container = L.DomUtil.create('div', 'leaflet-measure-contents', mainContainer);
 
                 const h1 = L.DomUtil.create('h3', '', container);
-                h1.innerHTML = "Elevation"
+                h1.innerHTML = "Elevação"
 
                 const pin = L.DomUtil.create('a', 'start', container);
-                pin.innerHTML = "Pin"
+                pin.innerHTML = "Ponto"
                 pin.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(pin);
                 L.DomEvent.on(pin, 'click', function () {
@@ -233,7 +229,7 @@
                 // });
 
                 const line = L.DomUtil.create('a', 'start', container);
-                line.innerHTML = `Profile`
+                line.innerHTML = `Perfil`
                 line.style.cursor = "pointer"
                 L.DomEvent.disableClickPropagation(line);
                 L.DomEvent.on(line, 'click', function () {
@@ -302,7 +298,7 @@
                 // const res = proj4.transform(proj4.WGS84, dest, p);      //do the transformation.  x and y are modified in place
                 // console.log('res', res);
                 // const { x, y } = res
-                var utm = "+proj=utm +zone=23 -I +south +datum=WGS84 +units=m +no_defs";
+                var utm = "+proj=utm +zone=22 -I +south +datum=WGS84 +units=m +no_defs";
                 var wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
                 const res = proj4(wgs84, utm, [lng, lat])
                 console.log(res)
@@ -330,7 +326,7 @@
 
                     const elevation = data[0].res;
 
-                    const copyText = `E ${x.toFixed(2)} N ${y.toFixed(2)} Z ${elevation.toFixed(2)}`
+                    const copyText = `E: ${x.toFixed(2)} N: ${y.toFixed(2)} Z: ${elevation.toFixed(2)}`
 
                     const centerPopup = L.popup({
                         className: 'popup-wide',
@@ -340,10 +336,10 @@
                     })
                         .setLatLng(layer.getLatLng())
                         .setContent(`
-                            <div>E ${x.toFixed(2)}</div>
-                            <div>N ${y.toFixed(2)}</div>
+                            <div>E: ${x.toFixed(2)}</div>
+                            <div>N: ${y.toFixed(2)}</div>
                             <div style="display:flex;justify-content: space-between;">
-                                <div>Z ${elevation.toFixed(2)}</div>
+                                <div>Z: ${elevation.toFixed(2)}</div>
                                 <div class="copy" style="cursor:pointer" onClick="copyToClipboard('E ${x.toFixed(2)} N ${y.toFixed(2)} Z ${elevation.toFixed(2)}')">
                                     <svg id="Group_27733" data-name="Group 27733" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 230.451 235.429">
                                         <path id="Path_25" data-name="Path 25" d="M1101.887,252.759h115.407a28.247,28.247,0,0,1,28.212,28.216v115.4a28.247,28.247,0,0,1-28.212,28.216H1101.887a28.247,28.247,0,0,1-28.211-28.216v-115.4A28.247,28.247,0,0,1,1101.887,252.759ZM1217.294,410.19a13.826,13.826,0,0,0,13.808-13.812v-115.4a13.826,13.826,0,0,0-13.808-13.812H1101.887a13.826,13.826,0,0,0-13.807,13.813v115.4a13.826,13.826,0,0,0,13.807,13.813Z" transform="translate(-1015.055 -189.165)" fill="#2e2842"/>
@@ -488,27 +484,52 @@
             if (window.console) window.console.log('exitFullscreen');
         });
 
+        var controlLayers1 = L.control.layers(null, null, {
+            position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
+            collapsed: false // false = open by default
+        }).addTo(map);
+
+        $.getJSON("src/edificacoes.geojson", function (data) {
+            var geoJsonLayer = L.geoJson(data, {
+                style: function (feature) {
+                    return {
+                        'color': 'blue',
+                        'weight': 1,
+                    }
+                },
+
+            });  // insert ".addTo(map)" to display layer by default
+            controlLayers1.addOverlay(geoJsonLayer, 'Edificações');  // insert your 'Title' to add to legend
+        });
+
+
         var controlLayers = L.control.layers(null, null, {
             position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
             collapsed: false // false = open by default
         }).addTo(map);
 
-        $.getJSON("https://trgeo.com.br/clientes/habcasa/comparador/data/20-01-23/saltinho/orthophoto/tiles/src/habcasa.geojson", function (data) {
+        $.getJSON("src/curvas.geojson", function (data) {
             var geoJsonLayer = L.geoJson(data, {
                 style: function (feature) {
                     return {
-                        'color': 'black',
+                        'color': 'yellow',
                         'weight': 1,
                     }
                 },
+
+            }).bindPopup(function (controlLayers) {
+                return controlLayers.feature.properties.Contour;
+
             });  // insert ".addTo(map)" to display layer by default
-            controlLayers.addOverlay(geoJsonLayer, 'Projeto');  // insert your 'Title' to add to legend
+
+            controlLayers.addOverlay(geoJsonLayer, 'Curvas');  // insert your 'Title' to add to legend
         });
+
 
         async function fetchData(coords) {
             if (coords.length === 0) return;
             const coordinates = coords
-            return fetch('http://191.252.111.193:3001/', {
+            return fetch('https://node.trgeo.com.br/', {
                 method: 'POST',
                 body: JSON.stringify(coordinates)
             })
@@ -568,6 +589,7 @@
                             props.tooltip.marker = (item) => item.dist + ' m';
                             break;
                     }
+
                 }
                 elevationProto._registerHandler.apply(this, [props]);
             }
@@ -592,16 +614,16 @@
                 const slope = Math.abs((((s1 - s2) / distance) * 100)).toFixed(2)
 
                 setTimeout(() => {
-                    document.querySelector(".totlen .summarylabel").innerHTML = `Total Length: `;
+                    document.querySelector(".totlen .summarylabel").innerHTML = `Distância: `;
                     document.querySelector(".totlen .summaryvalue").innerHTML = distance.toFixed(2) + "m"
 
-                    document.querySelector(".minele .summarylabel").innerHTML = `Min Elevation: `
+                    document.querySelector(".minele .summarylabel").innerHTML = `Alt. inicial: `
                     document.querySelector(".minele .summaryvalue").innerHTML = s1.toFixed(2) + "m"
 
-                    document.querySelector(".maxele .summarylabel").innerHTML = `Max Elevation: `
+                    document.querySelector(".maxele .summarylabel").innerHTML = `Alt. final: `
                     document.querySelector(".maxele .summaryvalue").innerHTML = s2.toFixed(2) + "m"
 
-                    document.querySelector(".avgele .summarylabel").innerHTML = "Slope: "
+                    document.querySelector(".avgele .summarylabel").innerHTML = "Declividade: "
                     document.querySelector(".avgele .summaryvalue").innerHTML = slope + "%"
                 }, 100)
             }
@@ -624,7 +646,7 @@
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text);
         }
-        L.control.browserPrint().addTo(map);
+
 
     </script>
 
