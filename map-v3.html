@@ -175,7 +175,7 @@
     <script>
         const elevation = {}
         const tifFileName = 'file';
-        let fileType = "DTM" // DSM or DTM
+        let fileType = "DSM" // DSM or DTM
 
         /* **** Leaflet **** */
         // Base layers
@@ -477,7 +477,6 @@
             if (type === 'profile') {
 
                 const coords = layer.getLatLngs()
-                console.log('coords', coords);
                 const startEnd = [
                     [coords[0].lng, coords[0].lat],
                     [coords[1].lng, coords[1].lat],
@@ -491,9 +490,8 @@
                 })
                 points.push({ lng: +coords[1].lng, lat: +coords[1].lat }) //add last line coordinate
 
-                console.log('points', points);
-
                 const data = await fetchData(points)
+                console.log('data', data);
                 if (data && data.length > 0) {
 
                     clearProfile() //remove prev
@@ -528,7 +526,7 @@
                         //     .setLatLng([d.lat, d.lng])
                         //     .setContent(`${d.res.toFixed(2)}`)
                         //     .openOn(map);
-                        coords.push([d.lng, d.lat, d.res])
+                        coords.push([d.lon, d.lat, d.res])
                     })
 
                     const geom = {
