@@ -6,14 +6,16 @@ const port = 3000;
 const server = http.createServer(async (request, response) => {
 
     if (request.method == 'POST') {
-        
+
         var body = ''
         request.on('data', function (data) {
             body += data
         })
         request.on('end', async function () {
-            const coordinates = JSON.parse(body);
-            const elevation = await getElevation(coordinates)
+            const body = JSON.parse(body);
+            const coordinates = body.coordinates
+            const fileName = body.fileName
+            const elevation = await getElevation(coordinates, fileName)
             const result = {
                 elevation: elevation || null
             }

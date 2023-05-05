@@ -150,6 +150,11 @@
             width: 100%;
             height: 100%;
         }
+
+        .file-type {
+            display: flex;
+
+        }
     </style>
 
 </head>
@@ -169,6 +174,9 @@
 
     <script>
         const elevation = {}
+        const tifFileName = 'file';
+        let fileType = "DTM" // DSM or DTM
+
         /* **** Leaflet **** */
         // Base layers
         //  .. OpenStreetMap
@@ -320,6 +328,43 @@
                         maxPoints: 2,
                     });
                     drawPolyline.enable();
+                });
+
+
+                const divDTM = L.DomUtil.create('div', 'file-type', container);
+                const terrain = L.DomUtil.create('input', '', divDTM);
+                terrain.id = `DTM`
+                terrain.type = `radio`
+                terrain.name = `file`
+                terrain.value = `DTM`
+                terrain.checked = true
+
+                const labelDTM = L.DomUtil.create('label', '', divDTM);
+                labelDTM.innerHTML = 'Terrain'
+                labelDTM.htmlFor = "DTM"
+
+                terrain.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(terrain, 'click', function () {
+                    fileType = "DTM"
+                });
+
+                const divDSM = L.DomUtil.create('div', 'file-type', container);
+                const surface = L.DomUtil.create('input', '', divDSM);
+                surface.id = `DSM`
+                surface.type = `radio`
+                surface.name = `file`
+                surface.value = `DSM`
+                surface.checked = false
+
+                const labelDSM = L.DomUtil.create('label', '', divDSM);
+                labelDSM.innerHTML = 'Surface'
+                labelDSM.htmlFor = "DSM"
+
+                surface.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(surface, 'click', function () {
+                    fileType = "DSM"
                 });
 
                 const clearLayer = L.DomUtil.create('div', 'leaflet-control-button', container);
@@ -617,7 +662,10 @@
             const coordinates = coords
             return fetch('https://node.trgeo.com.br/', {
                 method: 'POST',
-                body: JSON.stringify(coordinates)
+                body: JSON.stringify({
+                    coordinates,
+                    fileName: `${tifFileName}_${fileType}.tif`
+                })
             })
                 .then(response => response.json())
                 .then(data => {

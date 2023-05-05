@@ -3,12 +3,12 @@ import proj4 from 'proj4';
 import fs from 'fs';
 
 
-async function getElevation(coordsArray) {
+async function getElevation(coordsArray, fileName) {
     // Define the source and target coordinate systems
     const src = proj4.defs('EPSG:4326'); // Geographic coordinates (latitude and longitude)
     const dst = proj4.defs('EPSG:4326'); // Web Mercator projection
 
-    const buffer = fs.readFileSync("teste.tif");
+    const buffer = fs.readFileSync(fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     const tiff = await fromArrayBuffer(arrayBuffer)
     const image = await tiff.getImage();
