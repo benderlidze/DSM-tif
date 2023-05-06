@@ -162,6 +162,7 @@
 <body>
 
     <div id="map"></div>
+
     <script>
         HTMLCanvasElement.prototype.getContext = function (origFn) {
             return function (type, attribs) {
@@ -325,7 +326,7 @@
                             weight: 3,
                             type: "profile",
                         },
-                        maxPoints: 2,
+                        //maxPoints: 2,
                     });
                     drawPolyline.enable();
                 });
@@ -477,18 +478,22 @@
             if (type === 'profile') {
 
                 const coords = layer.getLatLngs()
-                const startEnd = [
-                    [coords[0].lng, coords[0].lat],
-                    [coords[1].lng, coords[1].lat],
-                ]
-                const line = turf.lineString(startEnd);
+                const end = coords.length - 1
+                console.log('coords', coords);
+                // const startEnd = [
+                //     [coords[0].lng, coords[0].lat],
+                //     [coords[end].lng, coords[end].lat],
+                // ]
+                const linePoints = coords.map(d => ([d.lng, d.lat]))
+                console.log('linePoints', linePoints);
+                const line = turf.lineString(linePoints);
                 const chunk = turf.lineChunk(line, 0.001, { units: 'kilometers' });
                 console.log('chunk', chunk);
                 const points = chunk.features.map(d => {
                     const [lng, lat] = d.geometry.coordinates[0]
                     return { lng: +lng, lat: +lat }
                 })
-                points.push({ lng: +coords[1].lng, lat: +coords[1].lat }) //add last line coordinate
+                //points.push({ lng: +coords[1].lng, lat: +coords[1].lat }) //add last line coordinate
 
                 const data = await fetchData(points)
                 console.log('data', data);
@@ -496,24 +501,46 @@
 
                     clearProfile() //remove prev
 
-                    console.log('data', data);
-                    const m1 = L.popup({
-                        className: 'popupCustom',
-                        closeOnClick: false,
-                        autoClose: false,
-                        closeButton: false
-                    })
-                        .setLatLng(startEnd[0].reverse())
-                        .setContent(`${data[0].res.toFixed(2)}`)
 
-                    const m2 = L.popup({
-                        className: 'popupCustom',
-                        closeOnClick: false,
-                        autoClose: false,
-                        closeButton: false
+                    // find and set main points
+                    const resultPoints = data.map(d => {
+                        return turf.point([d.lon, d.lat], { elevation: d.res });
                     })
-                        .setLatLng(startEnd[1].reverse())
-                        .setContent(`${data[data.length - 1].res.toFixed(2)}`)
+                    const resultPointsCollections = turf.featureCollection(resultPoints);
+                    linePoints.forEach(line => {
+                        const point = turf.nearestPoint(line, resultPointsCollections);
+                        console.log('point--------->', point);
+                        const mainPoint = L.popup({
+                            className: 'popupCustom',
+                            closeOnClick: false,
+                            autoClose: false,
+                            closeButton: false
+                        })
+                            .setLatLng(point.geometry.coordinates.reverse())
+                            .setContent(`${point.properties.elevation.toFixed(2)}`)
+
+                        layerGroup.addLayer(mainPoint)
+                    })
+
+
+                    console.log('data', data);
+                    // const m1 = L.popup({
+                    //     className: 'popupCustom',
+                    //     closeOnClick: false,
+                    //     autoClose: false,
+                    //     closeButton: false
+                    // })
+                    //     .setLatLng(startEnd[0].reverse())
+                    //     .setContent(`${data[0].res.toFixed(2)}`)
+
+                    // const m2 = L.popup({
+                    //     className: 'popupCustom',
+                    //     closeOnClick: false,
+                    //     autoClose: false,
+                    //     closeButton: false
+                    // })
+                    //     .setLatLng(startEnd[1].reverse())
+                    //     .setContent(`${data[data.length - 1].res.toFixed(2)}`)
 
                     const coords = [];
                     data.forEach(d => {
@@ -550,8 +577,8 @@
                     // m2.addTo(map)
 
                     layerGroup.addLayer(layer)
-                    layerGroup.addLayer(m1)
-                    layerGroup.addLayer(m2)
+                    // layerGroup.addLayer(m1)
+                    // layerGroup.addLayer(m2)
                     console.log('layerGroup', layerGroup);
 
                     legendDiv.append(controlElevation.eleDiv)
@@ -596,6 +623,16 @@
 
         var icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACwSURBVDhP7dA/DgFBHMXxX0docAKJgjvQURDx5zhU4gz+HMldNlEQCo3wfTMrGStDbKPxkk/yZu28bNiHrLDxNV/+A78YKKPhq0t2QL/pnWiaOGDkTmZrbH21IY5ouVOQOYq+ukxwRQcLLNFOn03xSAEzlRtqKkH0BXvsUupjhKlCd+2cHrLpQy/IQA8yqeCkEhtQuuj5+pKngbf/bCQluIEL6tDiN3RHdy2BlnKw5A7snzPtGRZkcwAAAABJRU5ErkJggg=='
         L.easyButton('<img class="zoom-out zoom-btn" src="' + icon + '" alt="zoom in"/>', function (btn, map) {
+
+            // some fix? for html2canvas svg problem
+            // const heightDiv = document.querySelector(".height-focus-group");
+            // heightDiv.classList.remove("leaflet-hidden")
+            // $("svg").each(function () {
+            //     var style = $(this).attr("style");
+            //     $(this).wrap("<spand style='" + style + "'></spand>");
+            //     $(this).removeAttr("style");
+            // });
+
             var html2canvasConfiguration = {
                 useCORS: true,
                 width: map._size.x,
@@ -613,6 +650,8 @@
                 link.click();
                 link.remove();
             })
+
+
         }).addTo(map);
 
 
