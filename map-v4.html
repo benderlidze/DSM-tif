@@ -778,7 +778,6 @@
                 // var distance = turf.distance(from, to, { units: 'meters' });
                 // console.log('distance', distance);
 
-
                 const points = data.map(d => ([d.latlng.lng, d.latlng.lat]))
                 var line = turf.lineString(points);
                 var length = turf.length(line, { units: 'meters' });

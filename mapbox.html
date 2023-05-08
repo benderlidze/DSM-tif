@@ -35,7 +35,7 @@
             font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
         }
 
-        .kml-input {
+        /* .kml-input {
             position: fixed;
             top: 10px;
             left: 3rem;
@@ -44,6 +44,17 @@
             border-radius: 3px;
             background-color: white;
             width: fit-content;
+        } */
+
+        .custom-file-upload {
+            display: flex;
+            width: 29px;
+            height: 29px;
+            cursor: pointer;
+        }
+
+        .mapboxgl-measure-tool-group {
+            align-items: flex-end !important;
         }
     </style>
 </head>
@@ -54,8 +65,6 @@
     <link rel="stylesheet"
         href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
         type="text/css" />
-
-    <input type="file" id="fileSelect" accept=".kml" class="kml-input" />
 
     <div id="map"></div>
     <script>
@@ -132,12 +141,57 @@
             })
         );
 
+        class HomeButton {
+
+            onAdd(map) {
+                const div = document.createElement("div");
+                div.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                div.innerHTML = `
+                <label for="fileSelect" class="custom-file-upload">
+                    <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" style="font-size: 20px;">
+                        <title>Reset map</title><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
+                    </svg>
+                </label>
+                `;
+
+                const input = document.createElement("input")
+                input.id = "fileSelect"
+                input.type = "file"
+                input.accept = ".kml"
+                input.className = "kml-input"
+                input.style.display = "none"
+                input.addEventListener("change", this.handleReadFile)
+
+                div.append(input)
+                div.addEventListener("contextmenu", (e) => e.preventDefault());
+                return div;
+            }
+
+            handleReadFile(event) {
+                let file = document.getElementById("fileSelect").files[0];
+                if (file) {
+                    let ext = getExtension(file.name);
+                    switch (ext) {
+                        case "kml":
+                            readDataFromKMLFile(file);
+                            break;
+                        default:
+                            alert("Invalid file ");
+                    }
+                }
+            }
+        }
+
+
+
+
 
         //***************************************************Imóveis certificados pelo INCRA 2ed. Geral*****************************************************************************
         //Load do Tileset
         map.on('load', function () {
 
             map.addControl(new MapboxglMeasureTools(), 'top-left')
+            map.addControl(new HomeButton(), "top-left");
 
             map.addSource('kml', {
                 'type': 'geojson',
@@ -451,23 +505,7 @@
         };
 
 
-        document
-            .getElementById("fileSelect")
-            .addEventListener("change", handleReadFile);
 
-        function handleReadFile(event) {
-            let file = document.getElementById("fileSelect").files[0];
-            if (file) {
-                let ext = getExtension(file.name);
-                switch (ext) {
-                    case "kml":
-                        readDataFromKMLFile(file);
-                        break;
-                    default:
-                        alert("Invalid file ");
-                }
-            }
-        }
         function readDataFromKMLFile(file) {
             let fileReader = new FileReader();
             fileReader.onload = async (e) => {
