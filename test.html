@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+    <title>dia1 dsm.tif</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" type="text/css" href="./src/leaflet.measure.css" />
+    <script type="text/javascript" src="./src/leaflet.measure.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@latest/Control.FullScreen.css" />
+    <script src="https://unpkg.com/leaflet.fullscreen@latest/Control.FullScreen.js"></script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
+    <!-- <script src="src/leaflet-elevation.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"
+        integrity="sha512-lO8f7sIViqr9x5VE6Q72PS6f4FoZcuh5W9YzeSyfNRJ9z/qL3bkweiwG6keGzWS0BQzNDqAWXdBhYzFD6KffIw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="html2canvas.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+        }
+
+        body,
+        table,
+        tr,
+        td,
+        th,
+        div,
+        h1,
+        h2,
+        input {
+            font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif;
+            font-size: 11pt;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* full size */
+        .ctl {
+            padding: 2px 10px 2px 10px;
+            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            text-align: right;
+        }
+
+        .title {
+            font-size: 18pt;
+            font-weight: bold;
+        }
+
+        .src {
+            font-size: 10pt;
+        }
+
+        .leaflet-popup-content {
+            margin: 2px 2px !important;
+            text-align: center;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 3px;
+        }
+
+        .leaflet-popup-tip {
+            margin: -17px auto 0 !important;
+        }
+
+        .elevation-summary.inline-summary {
+            display: none !important;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            color: #ff0000 !important;
+            background-color: white;
+        }
+
+
+        .leaflet-measure-expanded {
+            min-width: 150px !important;
+        }
+
+        .popup-wide {
+            min-width: 120px;
+        }
+
+        .popup-wide>.leaflet-popup-content-wrapper>.leaflet-popup-content {
+            text-align: left !important;
+            padding-left: 3px;
+        }
+
+        .elevation-toggle-icon {
+            position: absolute !important;
+            top: -50px !important;
+        }
+
+        .elevation-expanded {
+            position: absolute !important;
+            bottom: 0px !important;
+        }
+
+        .elevation-collapsed {
+            position: absolute !important;
+            bottom: 0px !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            box-shadow: none !important;
+        }
+
+        .elevation-expanded>.elevation-toggle-icon {
+            top: 5px !important;
+        }
+
+        .leaflet-center {
+            /* border: 1px solid red; */
+            width: 100%;
+            height: 300px;
+            left: 50%;
+            transform: translate(-50%, 0%);
+        }
+
+        .custom-control {
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-type {
+            display: flex;
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        HTMLCanvasElement.prototype.getContext = function (origFn) {
+            return function (type, attribs) {
+                attribs = attribs || {};
+                attribs.preserveDrawingBuffer = true;
+                return origFn.call(this, type, attribs);
+            };
+        }(HTMLCanvasElement.prototype.getContext);
+    </script>
+
+    <script>
+        const elevation = {}
+        const tifFileName = 'file';
+        let fileType = "DTM" // DSM or DTM
+
+        /* **** Leaflet **** */
+        // Base layers
+        //  .. OpenStreetMap
+        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 15, maxZoom: 20 });
+
+        //  .. CartoDB Positron
+        var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>', minZoom: 15, maxZoom: 20 });
+
+        //  .. OSM Toner
+        var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', { attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.', minZoom: 15, maxZoom: 20 });
+
+        //  .. White background
+        var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", { minZoom: 15, maxZoom: 20 });
+
+        // Overlay layers (TMS)
+        var lyr = L.tileLayer('https://trgeo.com.br/clientes/saomartinho/imagem/{z}/{x}/{y}.png', { tms: 1, attribution: "", minZoom: 15, maxNativeZoom: 20, maxZoom: 99 });
+
+
+        L.Map.include({
+            _initControlPos: function () {
+                var corners = this._controlCorners = {},
+                    l = 'leaflet-',
+                    container = this._controlContainer =
+                        L.DomUtil.create('div', l + 'control-container', this._container);
+
+                function createCorner(vSide, hSide) {
+                    var className = l + vSide + ' ' + l + hSide;
+
+                    corners[vSide + hSide] = L.DomUtil.create('div', className, container);
+                }
+
+                createCorner('top', 'left');
+                createCorner('top', 'right');
+                createCorner('bottom', 'left');
+                createCorner('bottom', 'right');
+
+                // createCorner('top', 'center');
+                // createCorner('middle', 'center');
+                // createCorner('middle', 'left');
+                // createCorner('middle', 'right');
+                createCorner('bottom', 'center');
+            }
+        });
+
+        // Map
+        var map = L.map('map', {
+            center: [-21.756808647996323, -48.08558966771166],
+            zoom: 16,
+            minZoom: 15,
+            maxZoom: 99,
+            layers: [osm, lyr],
+            renderer: L.canvas()
+        });
+
+        const legend = L.control({ position: 'bottomcenter' });
+        let legendDiv;
+        legend.onAdd = function (map) {
+            legendDiv = L.DomUtil.create('div', 'custom-control');
+            //div.append(controlElevation.eleDiv)
+            return legendDiv;
+        };
+        legend.addTo(map);
+
+        L.Measure = {
+            linearMeasurement: "Medir Distância",
+            areaMeasurement: "Medir Área",
+            start: "início",
+            meter: "m",
+            kilometer: "km",
+            squareMeter: "m²",
+            squareKilometers: "km²",
+        };
+        var measure = L.control.measure({}).addTo(map);
+
+        const layerGroup = L.layerGroup().addTo(map);
+        // var editableLayers = new L.FeatureGroup();
+        // map.addLayer(editableLayers);
+
+        // var options = {
+        //     position: 'topright',
+        //     draw: {
+        //         polyline: {
+        //             shapeOptions: {
+        //                 color: 'yellow',
+        //                 weight: 5
+        //             }
+        //         },
+        //         polygon: false,
+        //         circle: false,
+        //         rectangle: false,
+        //         marker: true,
+        //         circlemarker: false
+        //     },
+        //     edit: false
+        // };
+
+        L.Control.Elevation.MyHeart = function () {
+            return {
+                name: 'heart',      // <-- Your custom option name (eg. "heart: true")
+                unit: 'bpm',
+                meta: 'hr',         // <-- point.meta.hr
+                coordinateProperties: ["heart", "heartRates"], // List of GPX Extensions ("coordinateProperties") to be handled by "@tmcw/toGeoJSON"
+                pointToAttr: (point, i) => (point.hr ?? point.meta.hr ?? point.prev('heart')) || 0,
+                stats: {
+                    max: (heart, max = -Infinity) => {
+                        console.log('heart', heart);
+                        return (heart > max ? heart : max)
+                    },
+                    min: (heart, min = +Infinity) => (heart < min ? heart : min),
+                    avg: (heart, avg = 0, idx = 1) => (heart + avg * (idx - 1)) / idx,
+                },
+                scale: {
+                    axis: "y",
+                    position: "left",
+                    scale: { min: -1, max: +1 },
+                    tickPadding: 16,
+                    labelX: -18,
+                    labelY: -8,
+                },
+                path: {
+                    label: 'ECG',
+                    yAttr: 'heart',
+                    scaleX: 'distance',
+                    scaleY: 'heart',
+                    color: 'white',
+                    strokeColor: 'red',
+                    strokeOpacity: "1",
+                    strokeSize:
+                    fillOpacity: "0.1",
+                },
+                tooltip: {
+                    chart: (item) => L._("hr: ") + item.heart + " " + 'bpm',
+                    marker: (item) => item.heart + " " + 'bpm',
+                    order: 1
+                },
+                summary: {
+                    "minbpm": {
+                        label: "Min BPM: ",
+                        value: (track, unit) => Math.round(track.heart_min || 0) + '&nbsp;' + unit,
+                        // order: 30
+                    },
+                    "maxbpm": {
+                        label: "Max BPM: ",
+                        value: (track, unit) => Math.round(track.heart_max || 0) + '&nbsp;' + unit,
+                        // order: 30
+                    },
+                    "avgbpm": {
+                        label: "Avg BPM: ",
+                        value: (track, unit) => Math.round(track.heart_avg || 0) + '&nbsp;' + unit,
+                        // order: 20
+                    },
+                }
+            };
+        };
+
+        L.Control.Button = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+            onAdd: function (map) {
+                var mainContainer = L.DomUtil.create('div', ' leaflet-control-measure leaflet-bar leaflet-control leaflet-measure-expanded');
+                var container = L.DomUtil.create('div', 'leaflet-measure-contents', mainContainer);
+
+                const h1 = L.DomUtil.create('h3', '', container);
+                h1.innerHTML = "Elevação"
+
+                const pin = L.DomUtil.create('a', 'start', container);
+                pin.innerHTML = "Ponto"
+                pin.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(pin);
+                L.DomEvent.on(pin, 'click', function () {
+                    L.drawLocal.draw.handlers.marker.tooltip.start = '';
+                    var drawPolyline = new L.Draw.Marker(map, {
+                        shapeOptions: {
+                            type: "marker"
+                        },
+                    });
+                    drawPolyline.enable();
+                });
+
+                // const button = L.DomUtil.create('button', 'leaflet-control-button', container);
+                // button.innerHTML = "Slope"
+                // L.DomEvent.disableClickPropagation(button);
+                // L.DomEvent.on(button, 'click', function () {
+                //     var drawPolyline = new L.Draw.Polyline(map, {
+                //         shapeOptions: {
+                //             color: 'red',
+                //             weight: 5,
+                //             type: "slope",
+                //         },
+                //     });
+                //     drawPolyline.enable();
+                // });
+
+                const line = L.DomUtil.create('a', 'start', container);
+                line.innerHTML = `Perfil`
+                line.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(line, 'click', function () {
+                    L.drawLocal.draw.handlers.polyline.tooltip.start = '';
+                    L.drawLocal.draw.handlers.polyline.tooltip.cont = '';
+                    L.drawLocal.draw.handlers.polyline.tooltip.end = '2 cliques para finalizar';
+                    var drawPolyline = new L.Draw.Polyline(map, {
+                        shapeOptions: {
+                            color: 'yellow',
+                            weight: 3,
+                            type: "profile",
+                        },
+                        //maxPoints: 2,
+                    });
+                    drawPolyline.enable();
+                });
+
+
+                const divDTM = L.DomUtil.create('div', 'file-type', container);
+                const terrain = L.DomUtil.create('input', '', divDTM);
+                terrain.id = `DTM`
+                terrain.type = `radio`
+                terrain.name = `file`
+                terrain.value = `DTM`
+                terrain.checked = true
+
+                const labelDTM = L.DomUtil.create('label', '', divDTM);
+                labelDTM.innerHTML = 'Terrain'
+                labelDTM.htmlFor = "DTM"
+
+                terrain.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(terrain, 'click', function () {
+                    fileType = "DTM"
+                });
+
+                const divDSM = L.DomUtil.create('div', 'file-type', container);
+                const surface = L.DomUtil.create('input', '', divDSM);
+                surface.id = `DSM`
+                surface.type = `radio`
+                surface.name = `file`
+                surface.value = `DSM`
+                surface.checked = false
+
+                const labelDSM = L.DomUtil.create('label', '', divDSM);
+                labelDSM.innerHTML = 'Surface'
+                labelDSM.htmlFor = "DSM"
+
+                surface.style.cursor = "pointer"
+                L.DomEvent.disableClickPropagation(line);
+                L.DomEvent.on(surface, 'click', function () {
+                    fileType = "DSM"
+                });
+
+                const clearLayer = L.DomUtil.create('div', 'leaflet-control-button', container);
+                clearLayer.innerHTML = "Limpar"
+                clearLayer.style.cursor = "pointer"
+                clearLayer.style.fontWeight = "bold"
+                L.DomEvent.disableClickPropagation(clearLayer);
+                L.DomEvent.on(clearLayer, 'click', function () {
+                    clearProfile()
+                });
+                return mainContainer;
+            },
+            onRemove: function (map) { },
+        });
+        var control = new L.Control.Button()
+        control.addTo(map);
+
+
+
+        map.on(L.Draw.Event.CREATED, async function (e) {
+
+            console.log('e', e);
+            const type = e.layer.options.type
+            const layer = e.layer
+
+            console.log('type', type);
+
+            if (!type && e.layerType === 'marker') {
+                const { lat, lng } = layer.getLatLng()
+                const data = await fetchData([
+                    { lat, lng }
+                ])
+
+                // var source = new proj4.Proj('EPSG:4326');    //source coordinates will be in Longitude/Latitude, WGS84
+                // var dest = new proj4.Proj("+proj=utm +zone=33 +ellps=intl +units=m +no_defs"); // see http://spatialreference.org/ref/epsg/2078/
+                // var p = new proj4.Point(lng, lat);   //any object will do as long as it has 'x' and 'y' properties
+                // const res = proj4.transform(proj4.WGS84, dest, p);      //do the transformation.  x and y are modified in place
+                // console.log('res', res);
+                // const { x, y } = res
+                var utm = "+proj=utm +zone=22 -I +south +datum=WGS84 +units=m +no_defs";
+                var wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
+                const res = proj4(wgs84, utm, [lng, lat])
+                console.log(res)
+                const [x, y] = res
+
+
+                if (data && data[0]) {
+
+                    // const copy = `
+                    // <div class="copy" style="cursor:pointer">
+                    //     <svg id="Group_27733" data-name="Group 27733" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 230.451 235.429">
+                    //         <path id="Path_25" data-name="Path 25" d="M1101.887,252.759h115.407a28.247,28.247,0,0,1,28.212,28.216v115.4a28.247,28.247,0,0,1-28.212,28.216H1101.887a28.247,28.247,0,0,1-28.211-28.216v-115.4A28.247,28.247,0,0,1,1101.887,252.759ZM1217.294,410.19a13.826,13.826,0,0,0,13.808-13.812v-115.4a13.826,13.826,0,0,0-13.808-13.812H1101.887a13.826,13.826,0,0,0-13.807,13.813v115.4a13.826,13.826,0,0,0,13.807,13.813Z" transform="translate(-1015.055 -189.165)" fill="#2e2842"/>
+                    //         <path idcopyToClipboard(
+                    // </div>`
+                    // const copyButton = document.createElement('div');
+                    // copyButton.innerHTML = copy
+                    // copyButton.addEventListener("click", () => {
+                    //     console.log('123', 123);
+                    //     const content = `tton = tton = tton = `E ${x.toFixed(2)} N ${y.toFixed(2)} Z ${elevation.toFixed(2)}`
+                    //         <div>E ${x.toFixed(2)}</div>E 226368.84 N 7472506.12 Z 579.21
+                    //         <div>N ${y.toFixed(2)}</div>E 226238.96 N 7472527.88 Z 574.83
+                    //         <div>Z ${elevation.toFixed(2)}</div>123
+                    //     `
+                    // })
+
+                    const elevation = data[0].res;
+
+                    const copyText = `E: ${x.toFixed(2)} N: ${y.toFixed(2)} Z: ${elevation.toFixed(2)}`
+
+                    const centerPopup = L.popup({
+                        className: 'popup-wide',
+                        closeOnClick: false,
+                        autoClose: false,
+                        closeButton: true,
+                    })
+                        .setLatLng(layer.getLatLng())
+                        .setContent(`
+                            <div>E: ${x.toFixed(2)}</div>
+                            <div>N: ${y.toFixed(2)}</div>
+                            <div style="display:flex;justify-content: space-between;">
+                                <div>Z: ${elevation.toFixed(2)}</div>
+                                <div class="copy" style="cursor:pointer" onClick="copyToClipboard('E ${x.toFixed(2)} N ${y.toFixed(2)} Z ${elevation.toFixed(2)}')">
+                                    <svg id="Group_27733" data-name="Group 27733" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 230.451 235.429">
+                                        <path id="Path_25" data-name="Path 25" d="M1101.887,252.759h115.407a28.247,28.247,0,0,1,28.212,28.216v115.4a28.247,28.247,0,0,1-28.212,28.216H1101.887a28.247,28.247,0,0,1-28.211-28.216v-115.4A28.247,28.247,0,0,1,1101.887,252.759ZM1217.294,410.19a13.826,13.826,0,0,0,13.808-13.812v-115.4a13.826,13.826,0,0,0-13.808-13.812H1101.887a13.826,13.826,0,0,0-13.807,13.813v115.4a13.826,13.826,0,0,0,13.807,13.813Z" transform="translate(-1015.055 -189.165)" fill="#2e2842"/>
+                                        <path id="Path_26" data-name="Path 26" d="M1133.962,266.005h89.5a34.289,34.289,0,0,1,34.255,34.251v3.072a7.2,7.2,0,1,1-14.4,0v-3.072a19.875,19.875,0,0,0-19.853-19.848h-89.5a33.716,33.716,0,0,0-33.674,33.674v89.506a19.873,19.873,0,0,0,19.848,19.848,7.2,7.2,0,0,1,0,14.4,34.291,34.291,0,0,1-34.252-34.251V314.083A48.131,48.131,0,0,1,1133.962,266.005Z" transform="translate(-1085.885 -266.005)" fill="#2e2842"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        `)
+                    layerGroup.addLayer(centerPopup)
+                }
+            }
+            // if (type === 'slope') {
+            //     const data = await fetchData(layer.getLatLngs())
+            //     if (data && data.length > 0) {
+
+            //         data.forEach(d => {
+            //             const centerPopup = L.popup({
+            //                 className: 'popupCustom',
+            //                 closeOnClick: false,
+            //                 autoClose: false,
+            //                 closeButton: true,
+            //             })
+            //                 .setLatLng([d.lat, d.lng])
+            //                 .setContent(`${d.res.toFixed(2)}`)
+            //                 .openOn(map);
+            //         })
+
+            //     }
+            // }
+            if (type === 'profile') {
+
+                const coords = layer.getLatLngs()
+                const end = coords.length - 1
+                console.log('coords', coords);
+                // const startEnd = [
+                //     [coords[0].lng, coords[0].lat],
+                //     [coords[end].lng, coords[end].lat],
+                // ]
+                const linePoints = coords.map(d => ([d.lng, d.lat]))
+                console.log('linePoints', linePoints);
+                const line = turf.lineString(linePoints);
+                const chunk = turf.lineChunk(line, 0.001, { units: 'kilometers' });
+                console.log('chunk', chunk);
+                const points = chunk.features.map(d => {
+                    const [lng, lat] = d.geometry.coordinates[0]
+                    return { lng: +lng, lat: +lat }
+                })
+                //points.push({ lng: +coords[1].lng, lat: +coords[1].lat }) //add last line coordinate
+
+                const data = await fetchData(points)
+                console.log('data', data);
+                if (data && data.length > 0) {
+
+                    clearProfile() //remove prev
+
+                    // find and set main points
+                    const resultPoints = data.map(d => {
+                        return turf.point([d.lon, d.lat], { elevation: d.res });
+                    })
+                    const resultPointsCollections = turf.featureCollection(resultPoints);
+                    linePoints.forEach(line => {
+                        const point = turf.nearestPoint(line, resultPointsCollections);
+                        console.log('point--------->', point);
+                        const mainPoint = L.popup({
+                            className: 'popupCustom',
+                            closeOnClick: false,
+                            autoClose: false,
+                            closeButton: false
+                        })
+                            .setLatLng(point.geometry.coordinates.reverse())
+                            .setContent(`${point.properties.elevation.toFixed(2)}`)
+
+                        layerGroup.addLayer(mainPoint)
+                    })
+
+
+                    console.log('data', data);
+                    // const m1 = L.popup({
+                    //     className: 'popupCustom',
+                    //     closeOnClick: false,
+                    //     autoClose: false,
+                    //     closeButton: false
+                    // })
+                    //     .setLatLng(startEnd[0].reverse())
+                    //     .setContent(`${data[0].res.toFixed(2)}`)
+
+                    // const m2 = L.popup({
+                    //     className: 'popupCustom',
+                    //     closeOnClick: false,
+                    //     autoClose: false,
+                    //     closeButton: false
+                    // })
+                    //     .setLatLng(startEnd[1].reverse())
+                    //     .setContent(`${data[data.length - 1].res.toFixed(2)}`)
+
+                    const coords = [];
+                    const DTM = []
+                    data.forEach(d => {
+                        // const centerPopup = L.popup({
+                        //     className: 'popupCustom',
+                        //     closeOnClick: false,
+                        //     autoClose: false,
+                        //     closeButton: true,
+                        // })
+                        //     .setLatLng([d.lat, d.lng])
+                        //     .setContent(`${d.res.toFixed(2)}`)
+                        //     .openOn(map);
+                        coords.push([d.lon, d.lat, d.res])
+                        DTM.push(d.res + 10)
+                    })
+
+                    const geom = {
+                        "name": "demo.geojson",
+                        "type": "FeatureCollection",
+                        "features": [{
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": coords
+                            },
+                            "properties": {
+                                heart: DTM
+                            }
+                        }]
+                    }
+                    console.log('geom', geom);
+                    // Instantiate elevation control.
+                    controlElevation.addData(geom);
+
+                    // layer.addTo(map);
+                    // m1.addTo(map)
+                    // m2.addTo(map)
+
+                    layerGroup.addLayer(layer)
+                    // layerGroup.addLayer(m1)
+                    // layerGroup.addLayer(m2)
+                    console.log('layerGroup', layerGroup);
+
+                    legendDiv.append(controlElevation.eleDiv)
+
+                    controlElevation._expand()
+
+                    const element = document.querySelector(".elevation-summary.inline-summary")
+                    // element.setAttribute('style', 'display:inline !important');
+                    element.style.setProperty('display', 'inline', 'important');
+                }
+            }
+        });
+
+        function clearProfile() {
+            controlElevation.clear()
+            controlElevation._collapse()
+            layerGroup.clearLayers() //remove prev
+
+            const element = document.querySelector(".elevation-summary.inline-summary")
+            element.style.setProperty('display', 'none', 'important');
+        }
+
+        // create fullscreen control
+        var fsControl = L.control.fullscreen();
+        // add fullscreen control to the map
+        map.addControl(fsControl);
+
+        // detect fullscreen toggling
+        map.on('enterFullscreen', function () {
+            if (window.console) window.console.log('enterFullscreen');
+        });
+        map.on('exitFullscreen', function () {
+            if (window.console) window.console.log('exitFullscreen');
+        });
+
+        var controlLayers1 = L.control.layers(null, null, {
+            position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
+            collapsed: false // false = open by default
+        }).addTo(map);
+
+        var icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACwSURBVDhP7dA/DgFBHMXxX0docAKJgjvQURDx5zhU4gz+HMldNlEQCo3wfTMrGStDbKPxkk/yZu28bNiHrLDxNV/+A78YKKPhq0t2QL/pnWiaOGDkTmZrbH21IY5ouVOQOYq+ukxwRQcLLNFOn03xSAEzlRtqKkH0BXvsUupjhKlCd+2cHrLpQy/IQA8yqeCkEhtQuuj5+pKngbf/bCQluIEL6tDiN3RHdy2BlnKw5A7snzPtGRZkcwAAAABJRU5ErkJggg=='
+        L.easyButton('<img class="zoom-out zoom-btn" src="' + icon + '" alt="zoom in"/>', function (btn, map) {
+
+            var html2canvasConfiguration = {
+                useCORS: true,
+                width: map._size.x,
+                height: map._size.y,
+                backgroundColor: null,
+                logging: true,
+                imageTimeout: 0
+            };
+
+            const heightDiv = document.querySelector(".height-focus-group");
+            heightDiv.classList.remove("leaflet-hidden")
+
+            AddCss();// fix for html2canvas svg problem
+
+            var elementToCapture = document.body
+            html2canvas(elementToCapture, html2canvasConfiguration).then(function (canvas) {
+                var link = document.createElement('a');
+                link.download = 'test.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                link.remove();
+
+                RemoveCss();// fix for html2canvas svg problem
+            })
+
+
+        }).addTo(map);
+
+
+        $.getJSON("src/edificacoes.geojson", function (data) {
+            var geoJsonLayer = L.geoJson(data, {
+                style: function (feature) {
+                    return {
+                        'color': 'blue',
+                        'weight': 1,
+                    }
+                },
+
+            });  // insert ".addTo(map)" to display layer by default
+            controlLayers1.addOverlay(geoJsonLayer, 'Edificações');  // insert your 'Title' to add to legend
+        });
+
+
+        var controlLayers = L.control.layers(null, null, {
+            position: "topright", // suggested: bottomright for CT (in Long Island Sound); topleft for Hartford region
+            collapsed: false // false = open by default
+        }).addTo(map);
+
+
+        $.getJSON("src/curvas.geojson", function (data) {
+            var geoJsonLayer = L.geoJson(data, {
+                style: function (feature) {
+                    return {
+                        'color': 'yellow',
+                        'weight': 1,
+                    }
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup('<h1 style="margin:3px;">' + layer.feature.properties.Contour + '</h1>', {
+                        autoClose: true,
+                        closeButton: false,
+                    });
+                }
+            })
+            controlLayers.addOverlay(geoJsonLayer, 'Curvas');  // insert your 'Title' to add to legend
+        });
+
+
+        async function fetchData(coords) {
+            if (coords.length === 0) return;
+            const coordinates = coords
+            return fetch('https://node.trgeo.com.br/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    coordinates,
+                    fileName: `${tifFileName}_${fileType}.tif`
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    return data
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+
+        // Full list options at "leaflet-elevation.js"
+        var elevation_options = {
+            theme: "lime-theme",
+            collapsed: true,
+            autohide: false,
+            autofitBounds: true,
+            position: "bottom",
+            detached: true,
+            summary: "inline",
+            imperial: false,
+            // altitude: "disabled",
+            slope: false,
+            speed: false,
+            acceleration: false,
+            time: false,
+            legend: true,
+            followMarker: true,
+            almostOver: true,
+            distanceMarkers: true,
+            hotline: false,
+            decimalsY: 2,
+
+            //convert to meters 
+            xLabel: "m",
+            distanceFactor: 1000,
+            heart: true,
+
+            handlers: [                               // <-- A list of: Dynamic imports || "ClassName" || function Name() { return { /* a custom object definition */ } }
+                'Distance',                           // <-- same as: import("../src/handlers/distance.js")
+                'Time',                               // <-- same as: import("../src/handlers/time.js")
+                'Altitude',                           // <-- same as: import("../src/handlers/altitude.js")
+                'Slope',                              // <-- same as: import("../src/handlers/slope.js")
+                'Speed',                              // <-- same as: import("../src/handlers/speed.js")
+                'Acceleration',                       // <-- same as: import("../src/handlers/acceleration.js")
+                L.Control.Elevation.MyHeart,          // <-- see custom functions declared above
+            ],
+
+        };
+
+        const toPrecision = (x, n) => parseFloat(x).toFixed(n);
+        // Save a reference of default "L.Control.Elevation" (for later use)
+        const elevationProto = L.extend({}, L.Control.Elevation.prototype);
+
+
+        L.Control.Elevation.include({
+            // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/control.js#L1063-L1128
+            _registerHandler: function (props) {
+                if (typeof props === 'object') {
+                    console.log('props.name', props.name);
+                    switch (props.name) {
+                        // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/handlers/acceleration.js#L41-L61
+                        case 'distance':
+                            //let label = this.options.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
+                            props.tooltip.chart = (item) => item.dist.toFixed() + ' m';
+                            props.tooltip.marker = (item) => item.dist.toFixed() + ' m';
+                            break;
+                    }
+
+                }
+                elevationProto._registerHandler.apply(this, [props]);
+            }
+        });
+
+
+        const controlElevation = L.control.elevation(elevation_options).addTo(map);
+        let controlLayer = L.control.layers(null, null, elevation_options);
+
+
+
+
+        controlElevation.on('eledata_added', (d) => {
+            console.log('elechart_change', controlElevation._data);
+
+            if (controlElevation._data && controlElevation._data.length > 0) {
+                console.log('controlElevation._data', controlElevation._data);
+                const data = controlElevation._data
+                var from = turf.point([data[0].latlng.lng, data[0].latlng.lat]);
+                var to = turf.point([data[data.length - 1].latlng.lng, data[data.length - 1].latlng.lat]);
+                var distance = turf.distance(from, to, { units: 'meters' });
+                console.log('distance', distance);
+
+                const s1 = +data[0].altitude
+                const s2 = +data[data.length - 1].altitude
+                const slope = Math.abs((((s1 - s2) / distance) * 100)).toFixed(2)
+
+                setTimeout(() => {
+                    document.querySelector(".totlen .summarylabel").innerHTML = `Distância: `;
+                    document.querySelector(".totlen .summaryvalue").innerHTML = distance.toFixed(2) + "m"
+
+                    document.querySelector(".minele .summarylabel").innerHTML = `Alt. inicial: `
+                    document.querySelector(".minele .summaryvalue").innerHTML = s1.toFixed(2) + "m"
+
+                    document.querySelector(".maxele .summarylabel").innerHTML = `Alt. final: `
+                    document.querySelector(".maxele .summaryvalue").innerHTML = s2.toFixed(2) + "m"
+
+                    document.querySelector(".avgele .summarylabel").innerHTML = "Declividade: "
+                    document.querySelector(".avgele .summaryvalue").innerHTML = slope + "%"
+                }, 100)
+
+                // controlElevation.addOverlay()
+            }
+
+        })
+
+        controlElevation.on('elechart_hover', () => {
+            // line size to fixed height 
+            const group = d3.select(".height-focus-group");
+            const line = group.select("line")
+            const text = group.select("text")
+            const y1 = line.attr("y1")
+            const y2 = line.attr("y2")
+            const newHeight = y1 - 100
+            line.attr("y2", newHeight)
+            text.attr("y", newHeight)
+        });
+
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+        }
+
+
+        // fix for html2canvas svg problem
+        function AddCss() {
+            var css;
+            $(document).find("svg").each(function () {
+                var style = $(this).attr("style");
+                $(this).wrap("<spand style='" + style + "'></spand>");
+                $(this).removeAttr("style");
+            });
+        }
+        function RemoveCss() {
+            $(document).find("svg").each(function () {
+                css = $(this).parent().attr("style");
+                $(this).attr('style', css);
+                $(this).unwrap();
+            });
+        }
+    </script>
+
+</body>
+
+</html>
