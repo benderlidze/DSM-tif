@@ -320,6 +320,7 @@
                 L.DomEvent.on(line, 'click', function () {
                     L.drawLocal.draw.handlers.polyline.tooltip.start = '';
                     L.drawLocal.draw.handlers.polyline.tooltip.cont = '';
+                    L.drawLocal.draw.handlers.polyline.tooltip.end = '2 cliques para finalizar';
                     var drawPolyline = new L.Draw.Polyline(map, {
                         shapeOptions: {
                             color: 'yellow',
@@ -501,7 +502,6 @@
 
                     clearProfile() //remove prev
 
-
                     // find and set main points
                     const resultPoints = data.map(d => {
                         return turf.point([d.lon, d.lat], { elevation: d.res });
@@ -590,8 +590,6 @@
                     element.style.setProperty('display', 'inline', 'important');
                 }
             }
-
-            console.log('layer', layer);
         });
 
         function clearProfile() {
@@ -624,15 +622,6 @@
         var icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACwSURBVDhP7dA/DgFBHMXxX0docAKJgjvQURDx5zhU4gz+HMldNlEQCo3wfTMrGStDbKPxkk/yZu28bNiHrLDxNV/+A78YKKPhq0t2QL/pnWiaOGDkTmZrbH21IY5ouVOQOYq+ukxwRQcLLNFOn03xSAEzlRtqKkH0BXvsUupjhKlCd+2cHrLpQy/IQA8yqeCkEhtQuuj5+pKngbf/bCQluIEL6tDiN3RHdy2BlnKw5A7snzPtGRZkcwAAAABJRU5ErkJggg=='
         L.easyButton('<img class="zoom-out zoom-btn" src="' + icon + '" alt="zoom in"/>', function (btn, map) {
 
-            // some fix? for html2canvas svg problem
-            // const heightDiv = document.querySelector(".height-focus-group");
-            // heightDiv.classList.remove("leaflet-hidden")
-            // $("svg").each(function () {
-            //     var style = $(this).attr("style");
-            //     $(this).wrap("<spand style='" + style + "'></spand>");
-            //     $(this).removeAttr("style");
-            // });
-
             var html2canvasConfiguration = {
                 useCORS: true,
                 width: map._size.x,
@@ -642,6 +631,11 @@
                 imageTimeout: 0
             };
 
+            const heightDiv = document.querySelector(".height-focus-group");
+            heightDiv.classList.remove("leaflet-hidden")
+
+            AddCss();// fix for html2canvas svg problem
+
             var elementToCapture = document.body
             html2canvas(elementToCapture, html2canvasConfiguration).then(function (canvas) {
                 var link = document.createElement('a');
@@ -649,6 +643,8 @@
                 link.href = canvas.toDataURL();
                 link.click();
                 link.remove();
+
+                RemoveCss();// fix for html2canvas svg problem
             })
 
 
@@ -756,8 +752,8 @@
                         // ref: https://github.com/Raruto/leaflet-elevation/blob/c58250e7c20d52490aa3a50b611dbb282ff00a57/src/handlers/acceleration.js#L41-L61
                         case 'distance':
                             //let label = this.options.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
-                            props.tooltip.chart = (item) => item.dist + ' m';
-                            props.tooltip.marker = (item) => item.dist + ' m';
+                            props.tooltip.chart = (item) => item.dist.toFixed() + ' m';
+                            props.tooltip.marker = (item) => item.dist.toFixed() + ' m';
                             break;
                     }
 
@@ -819,8 +815,22 @@
         }
 
 
-
-
+        // fix for html2canvas svg problem
+        function AddCss() {
+            var css;
+            $(document).find("svg").each(function () {
+                var style = $(this).attr("style");
+                $(this).wrap("<spand style='" + style + "'></spand>");
+                $(this).removeAttr("style");
+            });
+        }
+        function RemoveCss() {
+            $(document).find("svg").each(function () {
+                css = $(this).parent().attr("style");
+                $(this).attr('style', css);
+                $(this).unwrap();
+            });
+        }
     </script>
 
 </body>
