@@ -632,7 +632,7 @@
             };
 
             const heightDiv = document.querySelector(".height-focus-group");
-            heightDiv.classList.remove("leaflet-hidden")
+            heightDiv && heightDiv.classList.remove("leaflet-hidden")
 
             AddCss();// fix for html2canvas svg problem
 
@@ -772,26 +772,18 @@
             if (controlElevation._data && controlElevation._data.length > 0) {
                 console.log('controlElevation._data', controlElevation._data);
                 const data = controlElevation._data
-
-                // var from = turf.point([data[0].latlng.lng, data[0].latlng.lat]);
-                // var to = turf.point([data[data.length - 1].latlng.lng, data[data.length - 1].latlng.lat]);
-                // var distance = turf.distance(from, to, { units: 'meters' });
-                // console.log('distance', distance);
-
-                const points = data.map(d => ([d.latlng.lng, d.latlng.lat]))
-                var line = turf.lineString(points);
-                var length = turf.length(line, { units: 'meters' });
-
-
-                console.log('length', length);
+                var from = turf.point([data[0].latlng.lng, data[0].latlng.lat]);
+                var to = turf.point([data[data.length - 1].latlng.lng, data[data.length - 1].latlng.lat]);
+                var distance = turf.distance(from, to, { units: 'meters' });
+                console.log('distance', distance);
 
                 const s1 = +data[0].altitude
                 const s2 = +data[data.length - 1].altitude
-                const slope = Math.abs((((s1 - s2) / length) * 100)).toFixed(2)
+                const slope = Math.abs((((s1 - s2) / distance) * 100)).toFixed(2)
 
                 setTimeout(() => {
                     document.querySelector(".totlen .summarylabel").innerHTML = `Distância: `;
-                    document.querySelector(".totlen .summaryvalue").innerHTML = length.toFixed(2) + "m"
+                    document.querySelector(".totlen .summaryvalue").innerHTML = distance.toFixed(2) + "m"
 
                     document.querySelector(".minele .summarylabel").innerHTML = `Alt. inicial: `
                     document.querySelector(".minele .summaryvalue").innerHTML = s1.toFixed(2) + "m"
