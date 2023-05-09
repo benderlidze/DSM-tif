@@ -16,6 +16,8 @@
     <script src="plugins/mapboxgl-measure-tools.min.js"></script>
     <link rel="stylesheet" href="plugins/mapboxgl-measure-tools.min.css">
 
+    <script src="html2canvas.min.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -74,11 +76,12 @@
         let mouseCoords;
         //********************************************************************Mapa Base********************************************************************************************
         mapboxgl.accessToken = 'pk.eyJ1IjoidHJnZW8tc2lnZWYtc25jaSIsImEiOiJja2ZlOG9jdXkwMmdhMnVsOHMwczN4ZXJtIn0.109W0C17jvXfFsTFVpH6_g';
-        var map = new mapboxgl.Map({
+        const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/fabioruffolo/cklmkyzri0r7q18s5fnnb9shp',
             center: [-47.5, -22.8],
-            zoom: 9
+            zoom: 9,
+            preserveDrawingBuffer: true
         });
 
         /* Given a query in the form "lng, lat" or "lat, lng"
@@ -196,6 +199,57 @@
                 }
             }
         }
+        class PrintButton {
+
+            onAdd(map) {
+                const div = document.createElement("div");
+                div.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                div.innerHTML = `
+                <label  class="custom-file-upload">
+                    <svg focusable="false" viewBox="0 0 487 487" width="25" height="25" preserveAspectRatio="" >
+                        <g>
+                            <g>
+                                <path d="M400.1,100.918h-9.871V11.646C390.229,5.215,385.014,0,378.582,0H108.804c-6.436,0-11.646,5.215-11.646,11.646v89.271
+                                    h-9.877c-38.523,0-69.871,31.344-69.871,69.871v144.258c0,38.528,31.348,69.87,69.871,69.87h9.877v90.818
+                                    c0,6.432,5.21,11.646,11.646,11.646h269.778c6.432,0,11.646-5.215,11.646-11.646v-90.818h9.871
+                                    c38.523,0,69.871-31.342,69.871-69.87V170.789C469.971,132.261,438.623,100.918,400.1,100.918z M120.449,23.291h246.489v77.627
+                                    H120.449V23.291z M366.938,464.092H120.449V320.465h246.489V464.092z M446.682,315.046c0,25.687-20.896,46.581-46.582,46.581
+                                    h-9.871v-41.162h25.186c6.436,0,11.645-5.214,11.645-11.646c0-6.43-5.209-11.645-11.645-11.645h-36.832H108.804H75.421
+                                    c-6.431,0-11.646,5.215-11.646,11.645c0,6.433,5.215,11.646,11.646,11.646h21.737v41.162h-9.877
+                                    c-25.685,0-46.581-20.896-46.581-46.581V170.789c0-25.685,20.896-46.58,46.581-46.58h21.522H378.58h21.52
+                                    c25.684,0,46.58,20.896,46.58,46.58v144.257H446.682z"/>
+                                <path d="M378.582,170.646c-8.771,0-15.893,7.119-15.893,15.893s7.119,15.893,15.893,15.893c8.775,0,15.895-7.118,15.895-15.893
+                                    C394.475,177.765,387.357,170.646,378.582,170.646z"/>
+                                <path d="M147.618,360.734h192.146c6.432,0,11.646-5.213,11.646-11.646c0-6.43-5.215-11.645-11.646-11.645H147.618
+                                    c-6.431,0-11.646,5.215-11.646,11.645C135.972,355.521,141.187,360.734,147.618,360.734z"/>
+                                <path d="M147.618,403.926h192.146c6.432,0,11.646-5.217,11.646-11.646c0-6.432-5.215-11.645-11.646-11.645H147.618
+                                    c-6.431,0-11.646,5.213-11.646,11.645S141.187,403.926,147.618,403.926z"/>
+                            </g>
+                        </g>
+                    </svg>
+                </label>
+                `;
+
+                div.addEventListener("click", (e) => {
+                    // var img = new Image();
+                    // var mapCanvas = document.querySelector('.mapboxgl-canvas');
+                    // img.src = mapCanvas.toDataURL();
+                    // window.document.body.appendChild(img);
+
+                   
+                    html2canvas(document.querySelector("#map")).then(function (canvas) {
+                        var link = document.createElement('a');
+                        link.download = 'test.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        link.remove();
+                    })
+                });
+                div.addEventListener("contextmenu", (e) => e.preventDefault());
+                return div;
+            }
+
+        }
 
 
 
@@ -207,6 +261,7 @@
 
             map.addControl(new MapboxglMeasureTools(), 'top-left')
             map.addControl(new HomeButton(), "top-left");
+            map.addControl(new PrintButton(), "top-left");
 
             map.addSource('kml', {
                 'type': 'geojson',
